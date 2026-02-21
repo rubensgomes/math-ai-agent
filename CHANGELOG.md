@@ -7,3 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-02-20
+
+### Added
+
+- Initial project scaffolding with Poetry build system
+- Project structure with `src/math_ai_agent` package layout
+- Development tooling: pytest, mypy, black, isort, pylint, coverage
+- GitHub connectivity test script (`scripts/test_github.sh`)
+- CHANGELOG, LICENSE, README, and SETUP documentation
+
