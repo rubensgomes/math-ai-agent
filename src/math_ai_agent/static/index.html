@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"
+      data-bs-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control"
+          content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma"
+          content="no-cache">
+    <meta http-equiv="Expires"
+          content="0">
+    <!-- Extra meta tags -->
+    <meta name="author"
+          content="Rubens Gomes">
+    <meta name="description"
+          content="A Math AI Agent that uses the MCP calculator for all arithmetic.">
+    <title>Math AI Agent</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+        crossorigin="anonymous">
+</head>
+<body>
+<header></header>
+<noscript>
+    <div class="fixed-top mt-7 fw-bold alert alert-danger"
+         role="alert">
+        Your browser does not have Javascript enabled. This web page does not
+        work correctly without Javascript. See <a class="link-primary"
+                                                  href="https://www.enable-javascript.com/"
+                                                  rel="external">instructions</a>
+        to enable Javascript.
+    </div>
+</noscript>
+<div class="container">
+    <h2>Math AI Agent!</h2>
+    <p>Ask a math question. The app will use the MCP calculator for all
+        arithmetic.</p>
+    <form class="row g-3">
+        <!-- math question prompt -->
+        <div class="col-12">
+            <label for="textarea-question-id"
+                   class="form-label">Math question:</label>
+            <textarea id="textarea-question-id"
+                      name="question"
+                      class="form-control"
+                      rows="3"></textarea>
+        </div>
+        <div class="col-12">
+            <button id="button-submit-id" type="button" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+
+    <div class="row g-3 mt-3">
+        <div class="col-12">
+            <label for="textarea-response-id"
+                   class="form-label">Response:</label>
+            <textarea id="textarea-response-id"
+                      class="form-control"
+                      rows="3"
+                      readonly></textarea>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.getElementById("button-submit-id").onclick = async () => {
+        const question = document.getElementById("textarea-question-id").value;
+        const res = await fetch("/prompt/", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({question})
+        });
+        const data = await res.json();
+        document.getElementById("textarea-response-id").value = data.answer;
+    };
+</script>
+
+</body>
+</html>
