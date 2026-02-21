@@ -1,0 +1,35 @@
+[MASTER]
+# Add files or directories matching the regex patterns to the ignore list
+ignore=antlr4
+
+[MESSAGES CONTROL]
+# Disable specific warnings
+disable=
+    # Too few public methods - common for Pydantic models
+    too-few-public-methods,
+    # Too many public methods - common for ANTLR listeners
+    too-many-public-methods,
+    # Fixme warnings (TODOs)
+    fixme,
+    # Import errors (false positives in some environments)
+    import-error,
+    # Missing docstrings in ANTLR generated files
+    missing-function-docstring,
+    missing-class-docstring,
+    missing-module-docstring,
+    # Invalid name for ANTLR generated files
+    invalid-name,
+    # Pytest fixtures redefine outer name by design
+    redefined-outer-name
+
+[BASIC]
+# Good variable names which should always be accepted
+good-names=i,j,k,e,f,_,logger
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=100
+
+[DESIGN]
+# Maximum number of branches for function / method body
+max-branches=15
