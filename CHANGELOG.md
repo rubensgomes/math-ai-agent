@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-03-06
+
+### Added
+
+- MCP client module (`calc_mcp_client.py`) with OAuth-authenticated connection to remote calculator MCP server
+- Configuration module (`config.py`) loading settings from `config.yaml` with environment variable override
+- YAML configuration file (`config.yaml`) for server, OAuth, and logging settings
+- Unit tests for `config.py` (11 tests) and `calc_mcp_client.py` (10 tests)
+- CLAUDE.md with project conventions and instructions for Claude Code
+- `llms.txt` with LLM-friendly project documentation
+- `py-key-value-aio[disk]` runtime dependency for encrypted OAuth token storage
+
+### Changed
+
+- Removed unused imports (`Annotated`, `Form`) from `main.py`
+- Changed `httpx` logger level from DEBUG to INFO in `config.yaml`
+- Updated README.md with current project structure and documentation
+- Updated SETUP.md with current tool versions and instructions
+- Reformatted test files to comply with black line-length rules
+
 ## [0.0.3] - 2026-02-21
 
 ### Changed

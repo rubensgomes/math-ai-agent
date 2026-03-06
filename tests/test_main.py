@@ -18,7 +18,9 @@ async def test_static_files_mount():
 @pytest.mark.asyncio
 async def test_static_files_not_found():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.get("/static/nonexistent.html")
         assert response.status_code == 404
 
@@ -26,7 +28,9 @@ async def test_static_files_not_found():
 @pytest.mark.asyncio
 async def test_root_returns_html():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.get("/")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
@@ -36,7 +40,9 @@ async def test_root_returns_html():
 @pytest.mark.asyncio
 async def test_root_contains_form_elements():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.get("/")
         assert "textarea-question-id" in response.text
         assert "button-submit-id" in response.text
@@ -46,8 +52,12 @@ async def test_root_contains_form_elements():
 @pytest.mark.asyncio
 async def test_prompt_returns_answer():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post("/prompt/", json={"question": "What is 2+2?"})
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/prompt/", json={"question": "What is 2+2?"}
+        )
         assert response.status_code == 200
         data = response.json()
         assert "answer" in data
@@ -57,7 +67,9 @@ async def test_prompt_returns_answer():
 @pytest.mark.asyncio
 async def test_prompt_strips_whitespace():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.post("/prompt/", json={"question": "  hello  "})
         assert response.status_code == 200
         assert response.json()["answer"] == "hello"
@@ -66,7 +78,9 @@ async def test_prompt_strips_whitespace():
 @pytest.mark.asyncio
 async def test_prompt_missing_question_field():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.post("/prompt/", json={})
         assert response.status_code == 422
 
@@ -74,9 +88,13 @@ async def test_prompt_missing_question_field():
 @pytest.mark.asyncio
 async def test_prompt_invalid_content_type():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.post(
-            "/prompt/", content="not json", headers={"content-type": "text/plain"}
+            "/prompt/",
+            content="not json",
+            headers={"content-type": "text/plain"},
         )
         assert response.status_code == 422
 
@@ -84,7 +102,9 @@ async def test_prompt_invalid_content_type():
 @pytest.mark.asyncio
 async def test_prompt_empty_body():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.post("/prompt/")
         assert response.status_code == 422
 
@@ -92,7 +112,9 @@ async def test_prompt_empty_body():
 @pytest.mark.asyncio
 async def test_prompt_wrong_type_for_question():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.post("/prompt/", json={"question": 123})
         assert response.status_code == 422
 
@@ -100,7 +122,9 @@ async def test_prompt_wrong_type_for_question():
 @pytest.mark.asyncio
 async def test_prompt_get_method_not_allowed():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         response = await client.get("/prompt/")
         assert response.status_code == 405
 

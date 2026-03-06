@@ -1,59 +1,70 @@
 # Setup
 
-This file describes steps to set up your local development environment.
+This file describes steps to set up your local Python development environment.
 
 ## Prerequisites
 
-- Claude Code 2.1.49+
-- gh version 2.81.0+ (GitHub CLI tool)
-- git version 2.43.0+
+As of March 01, 2026, the following tools and versions are required in Linux
+Ubuntu:
+
 - Ubuntu Linux 24.04.3 LTS
-- pyenv 2.6+
-- python 3.14+
-- pipx 1.4+
+- Claude Code 2.1.62+
+- cookiecutter 2.6.0+
+- gh version 2.45.0+ (GitHub CLI tool)
+- git version 2.43.0+
+- isort 0.0.1+
 - pip 25.3+
-- Poetry 2.2+
+- pipx 1.4.3+
+- poe 0.42.1+
+- poetry 2.3.2+
+- pyenv 2.6.23-5-g43e83b52+
+- pylint 4.0.5+
+- pytest 9.0.2+
+- python 3.14.3+
+- uv 0.10.7+
 
 ## Installing Tools
 
 ### `pyenv`
 
 - Install `pyenv` as follows:
+- Refer
+  to [Getting Pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#a-getting-pyenv):
 
     ```bash
-    mkdir -p "${HOME}/tmp"
-    cd "${HOME}/tmp"
-    git clone https://github.com/pyenv/pyenv.git
-    sudo rm -rf /opt/pyenv
-    sudo mv pyenv /opt/pyenv
+    git clone https://github.com/pyenv/pyenv.git ~/.pyenv
     ```
 
-- Ensure you add `/opt/pyenv/bin` to your `PATH` environment variable:
+- Set up `pyenv` as follows:
+- Refer
+  to [Set up shell environment for Pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#b-set-up-your-shell-environment-for-pyenv)
 
     ```bash
-    export PATH="${PATH}:/opt/pyenv/bin"
+    echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bash_profile
+    echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bash_profile
+    echo 'eval "$(pyenv init - bash)"' >> ~/.bash_profile
     ```
 
 ### `python`
 
-- Get the latest `python` 3.14 version as follows:
+- Get the latest `python` 3.14+ version as follows:
 
     ```bash
-    pyenv install --list | grep '^[[:space:]]*3.14'
+    pyenv install --list | grep '^[[:space:]]*3.1[4-9]'
     ```
 
 - Install `python` 3.14 as follows:
 
     ```bash
-    # assuming 3.14.2 is the latest python 3.14 release.
-    pyenv install "3.14.2"
+    # assuming 3.14.3 is the latest python 3.14 release.
+    pyenv install "3.14.3"
     ```
 
 - Configure the global `python` version:
 
     ```bash
-    # assuming 3.14.2 is the latest python 3.14 release.
-    pyenv global "3.14.2"
+    # assuming 3.14.3 is the latest python 3.14 release.
+    pyenv global "3.14.3"
     ```
 
 - Check the installed `python` version:
@@ -87,22 +98,30 @@ This file describes steps to set up your local development environment.
     pipx --version
     ```
 
-### `poetry` `pylint` `pytest`
+### `poetry` `pylint` `pytest` ...
 
 - Install several required utilities:
 
     ```bash
+    pipx install isort
+    pipx install poethepoet
     pipx install poetry
     pipx install pylint
     pipx install pytest
+    pipx install uv
+    uv tool install cookiecutter
     ```
 
 - Upgrade the packages installed using `pipx`:
 
     ```bash
+    pipx upgrade isort
+    pipx upgrade poethepoet
     pipx upgrade poetry
     pipx upgrade pylint
     pipx upgrade pytest
+    pipx upgrade uv
+    uv tool upgrade cookiecutter
     ```
 
 - Check the installed `poetry` version:
@@ -160,7 +179,7 @@ This file describes steps to set up your local development environment.
     claude --verbose --debug --model "opus" --ide
     ```
 
-## Clone the Git Repository
+## Clone an Existing Python Poetry-Based Git Repository
 
 **Clone the repository:**
 
@@ -174,30 +193,39 @@ This file describes steps to set up your local development environment.
 ```bash
 poetry add --dev black
 poetry add --dev coverage
-poetry add --dev isort
 poetry add --dev mypy
 poetry add --dev pytest-asyncio
 poetry add --dev pytest-cov
-poetry add --dev pylint
-poetry add --dev pytest
 poetry add --dev types-pyyaml
 ```
 
 ## Python Virtual Environment
 
-- Remove virtual environment:
+- Remove old virtual environment:
 
     ```bash
     cd $(git rev-parse --show-toplevel) || exit
     poetry env remove --all
     ```
 
-- Create virtual environment:
+- Create new virtual environment:
 
     ```bash
     cd $(git rev-parse --show-toplevel) || exit
     # poetry automatically uses the existing virtual environment to install packages
     poetry install
+    # display information about virtual environment
+    poetry env info
+    poetry show
+    ```
+
+- Update virtual environment:
+
+    ```bash
+    cd $(git rev-parse --show-toplevel) || exit
+    # poetry automatically uses the existing virtual environment to
+    # install/update packages
+    poetry update
     # display information about virtual environment
     poetry env info
     poetry show
@@ -350,3 +378,9 @@ Once the above "Edit Configurations in PyCharm" are configure:
     - git push -u origin main
 
 After previous steps go to GitHub remote repo and create a "release" branch.
+
+## Deploy MCP Server
+
+- For more information: <https://docs.prefect.io/v3/get-started>
+
+1. Login to <https://www.prefect.io/horizon> using GitHub credentials.

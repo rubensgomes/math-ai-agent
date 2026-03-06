@@ -1,0 +1,67 @@
+# math-ai-agent
+
+> A Math AI Agent that uses an LLM with Rubens' calculator-mcp server to answer math questions.
+
+## Overview
+
+This project is a Python application built with FastAPI and FastMCP. It provides a web interface where users submit math questions. The application uses an LLM combined with a remote calculator MCP (Model Context Protocol) server to compute answers.
+
+## Architecture
+
+The application has three main components:
+
+1. **FastAPI web application** (`main.py`) -- serves a static HTML form at `/` and exposes a `POST /prompt/` endpoint that accepts a math question and returns an answer.
+
+2. **MCP client** (`calc_mcp_client.py`) -- connects to an external calculator MCP server using the FastMCP library. Supports both plain HTTP and OAuth-authenticated connections. The calculator server exposes math tools (add, subtract, multiply, divide, power, sqrt, etc.) via MCP.
+
+3. **MCP server** (`calc_mcp.py`) -- placeholder for a local MCP server implementation.
+
+4. **Configuration** (`config.py` + `config.yaml`) -- loads YAML-based configuration and sets up Python logging. Provides helper functions for accessing server URL, OAuth settings, timeouts, and token storage paths.
+
+## Project Structure
+
+```
+src/math_ai_agent/
+  main.py             # FastAPI application (web UI + /prompt endpoint)
+  calc_mcp.py         # MCP server (placeholder)
+  calc_mcp_client.py  # MCP client that connects to the calculator server
+  config.py           # Configuration helpers (loads config.yaml, logging)
+  config.yaml         # Server, OAuth, and logging configuration
+  static/
+    index.html        # Bootstrap dark-theme web UI served at /
+tests/
+  test_main.py        # Test suite for the FastAPI application
+```
+
+## Configuration
+
+All configuration is in `config.yaml` under the `server.calculator_mcp` key:
+
+- `url` -- MCP server endpoint (e.g., `https://rubens-calculator-mcp.fastmcp.app/mcp`)
+- `is_oauth` -- boolean to enable OAuth authentication
+- `token_dir` -- directory path for encrypted OAuth token storage
+- `callback_port` -- port for the OAuth callback server
+- `timeout` -- HTTP client timeout in seconds
+
+The `logging` section uses Python's `logging.config.dictConfig` format.
+
+## Environment Variables
+
+- `CALCULATOR_MCP_CONFIG` -- optional path to an alternate `config.yaml`
+- `OAUTH_STORAGE_ENCRYPTION_KEY` -- Fernet encryption key for OAuth token storage (required when OAuth is enabled)
+
+## Key Dependencies
+
+- fastapi -- web framework
+- fastmcp -- MCP client/server library
+- litellm -- LLM integration
+- cryptography -- Fernet encryption for OAuth tokens (transitive via fastmcp)
+- key-value -- encrypted disk storage for OAuth tokens (transitive via fastmcp)
+- pyyaml -- YAML configuration parsing (transitive via fastmcp)
+
+## Build System
+
+- Poetry 2.3+ with `poetry-core` build backend
+- Python >= 3.12
+- Dev tools: black, mypy, isort, pytest, pytest-asyncio, pytest-cov, coverage
+- Task runner: poethepoet (`poe clean` for cleanup)
