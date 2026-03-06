@@ -12,7 +12,7 @@ The application has three main components:
 
 1. **FastAPI web application** (`main.py`) -- serves a static HTML form at `/` and exposes a `POST /prompt/` endpoint that accepts a math question and returns an answer.
 
-2. **MCP client** (`calc_mcp_client.py`) -- connects to an external calculator MCP server using the FastMCP library. Supports both plain HTTP and OAuth-authenticated connections. The calculator server exposes math tools (add, subtract, multiply, divide, power, sqrt, etc.) via MCP.
+2. **MCP client wrapper** (`mcp_calc.py`) -- async context manager that connects to an external calculator MCP server using the FastMCP library. Supports both plain HTTP and OAuth-authenticated connections. The calculator server exposes math tools (add, subtract, multiply, divide, power, sqrt, etc.) via MCP.
 
 3. **MCP server** (`calc_mcp.py`) -- placeholder for a local MCP server implementation.
 
@@ -24,7 +24,7 @@ The application has three main components:
 src/math_ai_agent/
   main.py             # FastAPI application (web UI + /prompt endpoint)
   calc_mcp.py         # MCP server (placeholder)
-  calc_mcp_client.py  # MCP client that connects to the calculator server
+  mcp_calc.py         # Async context manager for the calculator MCP server
   config.py           # Configuration helpers (loads config.yaml, logging)
   config.yaml         # Server, OAuth, and logging configuration
   static/

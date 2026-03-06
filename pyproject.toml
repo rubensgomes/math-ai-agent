@@ -1,6 +1,6 @@
 [project]
 name = "math-ai-agent"
-version = "0.0.4"
+version = "0.0.5"
 description = "Math AI Agent that uses LLM + Rubens calculator-mcp."
 authors = [
     { name = "Rubens Gomes", email = "rubens.s.gomes@gmail.com" }

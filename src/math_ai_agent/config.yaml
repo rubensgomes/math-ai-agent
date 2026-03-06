@@ -8,7 +8,7 @@ server:
         is_oauth: true
         url: "https://rubens-calculator-mcp.fastmcp.app/mcp"
         # location to store OAuth token
-        token_dir: "/home/rubens/.fastmcp"
+        token_dir: "/home/rubens/.fastmcp/oauth-tokens"
         # fixed port for the OAuth callback server
         callback_port: 10000
         # timeout in seconds

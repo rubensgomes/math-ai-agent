@@ -36,6 +36,13 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
+"""FastAPI application serving the Math AI Agent web interface.
+
+Exposes a root endpoint (``GET /``) that serves the HTML form and a
+``POST /prompt/`` endpoint that accepts a math question and returns
+an answer.
+"""
+
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -56,11 +63,13 @@ class MathQuestion(BaseModel):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def root():
+async def root() -> str:
+    """Serve the main HTML page."""
     return (STATIC_DIR / "index.html").read_text()
 
 
 @app.post("/prompt/")
-async def prompt(payload: MathQuestion):
+async def prompt(payload: MathQuestion) -> dict[str, str]:
+    """Accept a math question and return an answer."""
     question = payload.question.strip()
     return {"answer": question}

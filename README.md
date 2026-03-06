@@ -20,14 +20,15 @@ integration.
 ```
 src/math_ai_agent/
   main.py             # FastAPI application (web UI + /prompt endpoint)
-  calc_mcp.py         # MCP server (placeholder)
-  calc_mcp_client.py  # MCP client that connects to the calculator server
+  mcp_calc.py         # Async context manager for the calculator MCP server
   config.py           # Configuration helpers (loads config.yaml, logging)
   config.yaml         # Server, OAuth, and logging configuration
   static/
     index.html        # Web UI served at /
 tests/
-  test_main.py        # Test suite for the FastAPI application
+  integration/
+    calc_mcp_client.py  # Integration test client for the calculator MCP server
+  test_main.py          # Test suite for the FastAPI application
 ```
 
 ## Configuration
@@ -61,8 +62,8 @@ poetry install
 # Run the FastAPI server
 poetry run uvicorn math_ai_agent.main:app --reload
 
-# Run the MCP client standalone
-poetry run python -m math_ai_agent.calc_mcp_client
+# Run the MCP integration test client
+poetry run python tests/integration/calc_mcp_client.py
 ```
 
 ## License

@@ -19,4 +19,4 @@
 - [x] **Step 5:** Run `export SOURCE_DATE_EPOCH=$(date +%s); poetry build -v` and fix any issues (built successfully)
 - [x] **Step 6:** Ensure `CHANGELOG.md` exists in project root (confirmed)
 - [x] **Step 7:** Update `CHANGELOG.md` with v0.0.4 release changes (updated)
-- [ ] **Step 8:** Commit all changes to main, create tag v0.0.4, push, and create GitHub release
+- [x] **Step 8:** Commit all changes to main, create tag v0.0.4, push, and create GitHub release

@@ -14,8 +14,8 @@ poetry install
 # Run the FastAPI server
 poetry run uvicorn math_ai_agent.main:app --reload
 
-# Run the MCP client standalone
-poetry run python -m math_ai_agent.calc_mcp_client
+# Run the MCP integration test client
+poetry run python tests/integration/calc_mcp_client.py
 ```
 
 ## Code Quality

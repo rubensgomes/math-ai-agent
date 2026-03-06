@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-03-06
+
+### Added
+
+- `CalcMCP` async context manager class (`mcp_calc.py`) wrapping the calculator MCP server with tool caching and `call()` API
+- Unit tests for `mcp_calc.py` (11 tests, 100% coverage)
+- `tests/integration/` directory for integration test scripts
+- Disclaimer headers and module docstrings to all source and test files
+
+### Changed
+
+- Moved `calc_mcp_client.py` from `src/math_ai_agent/` to `tests/integration/` (integration test utility, not part of the distributed package)
+- Updated `main.py` with module docstring, endpoint docstrings, and return type annotations
+- Updated README.md, CLAUDE.md, and llms.txt to reflect new project structure
+
 ## [0.0.4] - 2026-03-06
 
 ### Added

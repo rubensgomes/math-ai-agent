@@ -36,11 +36,13 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""MCP client that connects to the calculator MCP server.
+"""Integration test client for the calculator MCP server.
 
-Provides ``create_client()`` to build a configured ``fastmcp.Client`` and
-``run_client()`` to connect, list available tools, and call each one with
-sample arguments.
+Connects to the remote calculator MCP server, lists available tools,
+and calls each one with sample arguments to verify end-to-end
+connectivity.  Run standalone with::
+
+    poetry run python tests/integration/calc_mcp_client.py
 """
 
 import asyncio

@@ -36,4 +36,4 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""math_ai_agent — Math AI Agent package."""
+"""Integration tests for the math_ai_agent package."""
