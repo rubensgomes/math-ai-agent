@@ -128,6 +128,39 @@ class CalcMCP:
         return result
 
     @staticmethod
+    def to_openai_tools(
+        tools: list[mcp.types.Tool],
+    ) -> list[dict]:
+        """Convert MCP tools to OpenAI function-calling tool schema.
+
+        Args:
+            tools: MCP tool definitions to convert.
+
+        Returns:
+            A list of dicts in the OpenAI tool format::
+
+                [
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "add",
+                            "description": "Add two numbers",
+                            "parameters": { ... }
+                        }
+                    },
+                    ...
+                ]
+        """
+        openai_tools: list[dict] = []
+        for tool in tools:
+            func: dict = {"name": tool.name}
+            if tool.description:
+                func["description"] = tool.description
+            func["parameters"] = tool.inputSchema
+            openai_tools.append({"type": "function", "function": func})
+        return openai_tools
+
+    @staticmethod
     def _create_client() -> Client:
         """Create and return an MCP Client based on config.yaml settings.
 

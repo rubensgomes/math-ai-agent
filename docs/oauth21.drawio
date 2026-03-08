@@ -1,0 +1,81 @@
+<mxfile host="app.diagrams.net" modified="2026-02-21T21:40:00.000Z" agent="Mozilla/5.0" version="20.8.16">
+  <diagram id="oauth21" name="OAuth 2.1 Authorization Code + PKCE">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1"
+                  tooltips="1" connect="1" arrows="1" fold="1"
+                  page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Components -->
+        <mxCell id="user" value="Resource Owner (User)"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="client" value="Client Application&#10;(SPA / Mobile / Web)"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="220" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="auth" value="Authorization Server&#10;Authorization Endpoint&#10;Token Endpoint"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="60" width="300" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="resource" value="Resource Server&#10;Protected API"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="240" width="300" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Flows -->
+        <mxCell id="f1" value="1. Authorization Request&#10;response_type=code + PKCE"
+                style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1"
+                edge="1" parent="1" source="client" target="auth">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="f2" value="2. User Authentication &amp; Consent"
+                style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1"
+                edge="1" parent="1" source="auth" target="user">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="f3" value="3. Authorization Code (Redirect)"
+                style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1"
+                edge="1" parent="1" source="auth" target="client">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="f4" value="4. Token Request&#10;code + code_verifier"
+                style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1"
+                edge="1" parent="1" source="client" target="auth">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="f5" value="5. Access Token (+ Refresh Token)"
+                style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1"
+                edge="1" parent="1" source="auth" target="client">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="f6" value="6. API Request&#10;Authorization: Bearer token"
+                style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1"
+                edge="1" parent="1" source="client" target="resource">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="f7" value="7. Protected Resource Response"
+                style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1"
+                edge="1" parent="1" source="resource" target="client">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

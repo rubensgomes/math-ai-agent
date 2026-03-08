@@ -41,6 +41,7 @@
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+import mcp.types
 import pytest
 from cryptography.fernet import Fernet
 from fastmcp import Client
@@ -151,6 +152,17 @@ async def test_aenter_pings_and_populates_tools():
 
 
 @pytest.mark.asyncio
+async def test_aenter_returns_self():
+    mock_client = _make_mock_client()
+
+    with patch.object(CalcMCP, "_create_client", return_value=mock_client):
+        obj = CalcMCP()
+        returned = await obj.__aenter__()
+        assert returned is obj
+        await obj.__aexit__(None, None, None)
+
+
+@pytest.mark.asyncio
 async def test_aexit_delegates_to_client():
     mock_client = _make_mock_client()
 
@@ -195,6 +207,20 @@ async def test_ensure_tools_returns_cache_on_second_call():
     mock_client.list_tools.assert_awaited_once()
 
 
+@pytest.mark.asyncio
+async def test_ensure_tools_skips_fetch_when_pre_populated():
+    existing = [SimpleNamespace(name="divide", description="Divide")]
+    CalcMCP.tools = existing
+    mock_client = _make_mock_client()
+
+    with patch.object(CalcMCP, "_create_client", return_value=mock_client):
+        calc = CalcMCP()
+        result = await calc.ensure_tools()
+
+    assert result is existing
+    mock_client.list_tools.assert_not_awaited()
+
+
 # ---------------------------------------------------------------------------
 # call
 # ---------------------------------------------------------------------------
@@ -222,6 +248,94 @@ async def test_call_with_empty_arguments():
 
     assert result == "ok"
     mock_client.call_tool.assert_awaited_once_with("noop", {})
+
+
+# ---------------------------------------------------------------------------
+# to_openai_tools
+# ---------------------------------------------------------------------------
+
+
+def test_to_openai_tools_converts_single_tool():
+    tools = [
+        mcp.types.Tool(
+            name="add",
+            description="Add two numbers",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "a": {"type": "number"},
+                    "b": {"type": "number"},
+                },
+                "required": ["a", "b"],
+            },
+        )
+    ]
+    result = CalcMCP.to_openai_tools(tools)
+    assert len(result) == 1
+    assert result[0]["type"] == "function"
+    func = result[0]["function"]
+    assert func["name"] == "add"
+    assert func["description"] == "Add two numbers"
+    assert func["parameters"]["type"] == "object"
+    assert "a" in func["parameters"]["properties"]
+    assert "b" in func["parameters"]["properties"]
+
+
+def test_to_openai_tools_multiple_tools():
+    tools = [
+        mcp.types.Tool(
+            name="add",
+            description="Add",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        mcp.types.Tool(
+            name="sqrt",
+            description="Square root",
+            inputSchema={
+                "type": "object",
+                "properties": {"a": {"type": "number"}},
+            },
+        ),
+    ]
+    result = CalcMCP.to_openai_tools(tools)
+    assert len(result) == 2
+    assert result[0]["function"]["name"] == "add"
+    assert result[1]["function"]["name"] == "sqrt"
+
+
+def test_to_openai_tools_empty_list():
+    assert CalcMCP.to_openai_tools([]) == []
+
+
+def test_to_openai_tools_no_description():
+    tools = [
+        mcp.types.Tool(
+            name="noop",
+            inputSchema={"type": "object", "properties": {}},
+        )
+    ]
+    result = CalcMCP.to_openai_tools(tools)
+    assert "description" not in result[0]["function"]
+
+
+def test_to_openai_tools_preserves_input_schema():
+    schema = {
+        "type": "object",
+        "properties": {
+            "a": {"type": "number", "description": "First operand"},
+            "b": {"type": "number", "description": "Second operand"},
+        },
+        "required": ["a", "b"],
+    }
+    tools = [
+        mcp.types.Tool(
+            name="add",
+            description="Add",
+            inputSchema=schema,
+        )
+    ]
+    result = CalcMCP.to_openai_tools(tools)
+    assert result[0]["function"]["parameters"] == schema
 
 
 # ---------------------------------------------------------------------------

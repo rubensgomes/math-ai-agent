@@ -9,7 +9,7 @@
 - [x] Run `export SOURCE_DATE_EPOCH=$(date +%s); poetry build -v` and fix any issues
 - [x] Ensure `CHANGELOG.md` exists and update with current release changes
 - [x] Bump version in `pyproject.toml` to `0.0.5`
-- [ ] Commit all changes to main, create tag `v0.0.5`, push, and create GitHub release
+- [x] Commit all changes to main, create tag `v0.0.5`, push, and create GitHub release
 
 ## Changes in This Release
 

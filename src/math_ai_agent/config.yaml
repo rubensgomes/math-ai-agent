@@ -46,6 +46,12 @@ logging:
             handlers:
                 - console
             propagate: false
+        # OpenAI SDK logging — set to DEBUG for request/response detail
+        openai:
+            level: DEBUG
+            handlers:
+                - console
+            propagate: false
         # HTTP wire-level tracing (headers, TCP) — set to DEBUG for detail
         httpcore:
             level: INFO

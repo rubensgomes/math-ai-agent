@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-03-07
+
+### Added
+
+- `OLLAMA.md` documentation for installing and running Ollama with local LLM models
+- `llm.py` module with system instructions for the math tutor LLM
+- `openai` DEBUG-level logger in `config.yaml` for OpenAI SDK request/response tracing
+- Logging integration in `tests/integration/openai_client.py` using project config
+
+### Changed
+
+- Renamed `OLLAMAmd` to `OLLAMA.md` (proper Markdown extension)
+- Fixed typo in `OLLAMA.md`: "Linus" to "Linux"
+
 ## [0.0.5] - 2026-03-06
 
 ### Added
