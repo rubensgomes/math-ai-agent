@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-03-08
+
+### Changed
+
+- Refactored `CalcMCPClient` to extend `fastmcp.Client` directly (removed wrapper delegation pattern)
+- Renamed `CalcMCP` class to `CalcMCPClient`
+- Renamed `mcp_calc.py` to `calc_mcp_client.py` (PEP 8 module naming)
+- Renamed integration test to `test_calc_mcp_client.py` (pytest discovery convention)
+- Changed `to_openai_tools()` from static method to async instance method
+- Integration test now prints tools in OpenAI function-calling JSON format
+- Callers use inherited `call_tool()` instead of removed `call()` wrapper
+
+### Removed
+
+- Removed unit tests for integration test source code
+- Removed dead `create_client()` function and unused imports from integration test
+
+### Fixed
+
+- Fixed stale log message referencing old `CalcMCP.tools` attribute name
+- Fixed stale docstrings and documentation with current file names and architecture
+- Updated README.md, CLAUDE.md, and llms.txt to reflect current project structure
+
 ## [0.0.6] - 2026-03-07
 
 ### Added

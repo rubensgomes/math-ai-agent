@@ -36,183 +36,459 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""Unit tests for :mod:`tests.integration.calc_mcp_client`."""
+"""Unit tests for :mod:`math_ai_agent.calc_mcp_client`."""
 
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+import mcp.types
 import pytest
 from cryptography.fernet import Fernet
 from fastmcp import Client
 
-from tests.integration import calc_mcp_client
+from math_ai_agent import calc_mcp_client
+from math_ai_agent.calc_mcp_client import CalcMCPClient
 
 # ---------------------------------------------------------------------------
-# _SAMPLE_ARGS
+# Helpers
 # ---------------------------------------------------------------------------
 
-
-def test_sample_args_is_dict():
-    assert isinstance(calc_mcp_client._SAMPLE_ARGS, dict)
+_URL = "http://localhost:9000/mcp"
 
 
-def test_sample_args_has_expected_tools():
-    expected = {
-        "add",
-        "subtract",
-        "multiply",
-        "divide",
-        "power",
-        "nth_root",
-        "modulo",
-        "floor_divide",
-        "sqrt",
-        "absolute",
-        "floor",
-        "ceil",
-        "log10",
-        "ln",
-        "exp",
-        "round_number",
-    }
-    assert set(calc_mcp_client._SAMPLE_ARGS.keys()) == expected
+@pytest.fixture(autouse=True)
+def _clear_tools_cache():
+    """Reset the class-level tool cache before each test."""
+    CalcMCPClient._tools = []
+    yield
+    CalcMCPClient._tools = []
 
 
-def test_sample_args_values_are_dicts():
-    for name, args in calc_mcp_client._SAMPLE_ARGS.items():
-        assert isinstance(args, dict), f"{name} args should be a dict"
+@pytest.fixture()
+def _patch_no_oauth():
+    """Patch config to disable OAuth and stub Client.__init__."""
+    with (
+        patch.object(Client, "__init__", return_value=None) as mock_init,
+        patch.object(calc_mcp_client, "is_oauth", return_value=False),
+        patch.object(calc_mcp_client, "get_url", return_value=_URL),
+    ):
+        yield mock_init
 
 
-# ---------------------------------------------------------------------------
-# create_client — no OAuth
-# ---------------------------------------------------------------------------
-
-
-@patch.object(calc_mcp_client, "is_oauth", return_value=False)
-@patch.object(
-    calc_mcp_client, "get_url", return_value="http://localhost:9000/mcp"
-)
-def test_create_client_no_oauth(mock_url, mock_oauth):
-    client = calc_mcp_client.create_client()
-    assert isinstance(client, Client)
-    mock_url.assert_called_once()
-    mock_oauth.assert_called_once()
-
-
-# ---------------------------------------------------------------------------
-# create_client — with OAuth
-# ---------------------------------------------------------------------------
-
-
-@patch.object(calc_mcp_client, "get_callback_port", return_value=10000)
-@patch.object(calc_mcp_client, "get_token_dir", return_value="/tmp/test-tokens")
-@patch.object(calc_mcp_client, "is_oauth", return_value=True)
-@patch.object(
-    calc_mcp_client, "get_url", return_value="http://localhost:9000/mcp"
-)
-def test_create_client_with_oauth(
-    mock_url, mock_oauth, mock_token_dir, mock_port, monkeypatch
-):
+@pytest.fixture()
+def _patch_oauth(monkeypatch):
+    """Patch config to enable OAuth and stub Client.__init__."""
     key = Fernet.generate_key().decode()
     monkeypatch.setenv("OAUTH_STORAGE_ENCRYPTION_KEY", key)
-    client = calc_mcp_client.create_client()
-    assert isinstance(client, Client)
-    mock_url.assert_called_once()
-    mock_token_dir.assert_called_once()
+    with (
+        patch.object(Client, "__init__", return_value=None) as mock_init,
+        patch.object(calc_mcp_client, "is_oauth", return_value=True),
+        patch.object(calc_mcp_client, "get_url", return_value=_URL),
+        patch.object(
+            calc_mcp_client, "get_token_dir", return_value="/tmp/test-tokens"
+        ) as mock_td,
+        patch.object(
+            calc_mcp_client, "get_callback_port", return_value=10000
+        ) as mock_port,
+    ):
+        yield mock_init, mock_td, mock_port
+
+
+def _make_calc(tools=None, call_result="42"):
+    """Create a ``CalcMCPClient`` with mocked inherited methods."""
+    with (
+        patch.object(Client, "__init__", return_value=None),
+        patch.object(calc_mcp_client, "is_oauth", return_value=False),
+        patch.object(calc_mcp_client, "get_url", return_value=_URL),
+    ):
+        calc = CalcMCPClient()
+
+    # Mock the inherited async methods
+    calc.ping = AsyncMock()
+    calc.call_tool = AsyncMock(return_value=call_result)
+
+    # Patch Client's __aenter__/__aexit__ on the instance
+    _original_aenter = Client.__aenter__
+    _original_aexit = Client.__aexit__
+    calc._super_aenter = AsyncMock(return_value=calc)
+    calc._super_aexit = AsyncMock(return_value=None)
+
+    # Mock super().list_tools via Client.list_tools
+    calc._parent_list_tools = AsyncMock(return_value=tools or [])
+    return calc
+
+
+# ---------------------------------------------------------------------------
+# __init__ — no OAuth
+# ---------------------------------------------------------------------------
+
+
+def test_init_no_oauth(_patch_no_oauth):
+    mock_init = _patch_no_oauth
+    calc = CalcMCPClient()
+    assert isinstance(calc, Client)
+    mock_init.assert_called_once_with(_URL)
+
+
+# ---------------------------------------------------------------------------
+# __init__ — with OAuth
+# ---------------------------------------------------------------------------
+
+
+def test_init_with_oauth(_patch_oauth):
+    mock_init, mock_td, mock_port = _patch_oauth
+    calc = CalcMCPClient()
+    assert isinstance(calc, Client)
+    mock_init.assert_called_once()
+    mock_td.assert_called_once()
     mock_port.assert_called_once()
+    # Verify OAuth auth was passed
+    _, kwargs = mock_init.call_args
+    assert "auth" in kwargs
 
 
-@patch.object(calc_mcp_client, "get_callback_port", return_value=10000)
-@patch.object(calc_mcp_client, "get_token_dir", return_value="/tmp/test-tokens")
-@patch.object(calc_mcp_client, "is_oauth", return_value=True)
-@patch.object(
-    calc_mcp_client, "get_url", return_value="http://localhost:9000/mcp"
-)
-def test_create_client_oauth_missing_env_var_raises(
-    mock_url, mock_oauth, mock_token_dir, mock_port, monkeypatch
-):
+def test_init_oauth_missing_env_raises(monkeypatch):
     monkeypatch.delenv("OAUTH_STORAGE_ENCRYPTION_KEY", raising=False)
-    with pytest.raises(KeyError):
-        calc_mcp_client.create_client()
+    with (
+        patch.object(Client, "__init__", return_value=None),
+        patch.object(calc_mcp_client, "is_oauth", return_value=True),
+        patch.object(calc_mcp_client, "get_url", return_value=_URL),
+        patch.object(
+            calc_mcp_client,
+            "get_token_dir",
+            return_value="/tmp/test-tokens",
+        ),
+        patch.object(calc_mcp_client, "get_callback_port", return_value=10000),
+    ):
+        with pytest.raises(KeyError):
+            CalcMCPClient()
 
 
 # ---------------------------------------------------------------------------
-# run_client
+# async context manager (__aenter__ / __aexit__)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_run_client(capsys):
-    tool = SimpleNamespace(name="add", description="Add two numbers")
-    mock_client = AsyncMock()
-    mock_client.ping = AsyncMock()
-    mock_client.list_tools = AsyncMock(return_value=[tool])
-    mock_client.call_tool = AsyncMock(return_value="5")
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
-
-    with patch.object(
-        calc_mcp_client, "create_client", return_value=mock_client
-    ):
-        await calc_mcp_client.run_client()
-
-    mock_client.ping.assert_awaited_once()
-    mock_client.list_tools.assert_awaited_once()
-    mock_client.call_tool.assert_awaited_once_with("add", {"a": 2, "b": 3})
-
-    output = capsys.readouterr().out
-    assert "1 tools available" in output
-    assert "add: Add two numbers" in output
-    assert "=> 5" in output
-
-
-@pytest.mark.asyncio
-async def test_run_client_unknown_tool_uses_empty_args():
-    tool = SimpleNamespace(name="unknown_op", description="Mystery tool")
-    mock_client = AsyncMock()
-    mock_client.ping = AsyncMock()
-    mock_client.list_tools = AsyncMock(return_value=[tool])
-    mock_client.call_tool = AsyncMock(return_value="ok")
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
-
-    with patch.object(
-        calc_mcp_client, "create_client", return_value=mock_client
-    ):
-        await calc_mcp_client.run_client()
-
-    mock_client.call_tool.assert_awaited_once_with("unknown_op", {})
-
-
-@pytest.mark.asyncio
-async def test_run_client_multiple_tools(capsys):
+async def test_aenter_pings_and_populates_tools():
     tools = [
-        SimpleNamespace(name="add", description="Add"),
-        SimpleNamespace(name="sqrt", description="Square root"),
+        SimpleNamespace(name="add", description="Add two numbers"),
     ]
-    mock_client = AsyncMock()
-    mock_client.ping = AsyncMock()
-    mock_client.list_tools = AsyncMock(return_value=tools)
-    mock_client.call_tool = AsyncMock(return_value="result")
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
+    calc = _make_calc(tools=tools)
+
+    with (
+        patch.object(
+            Client,
+            "__aenter__",
+            new_callable=AsyncMock,
+            return_value=calc,
+        ),
+        patch.object(
+            Client,
+            "__aexit__",
+            new_callable=AsyncMock,
+            return_value=None,
+        ),
+        patch.object(
+            Client,
+            "list_tools",
+            new_callable=AsyncMock,
+            return_value=tools,
+        ),
+    ):
+        async with calc:
+            calc.ping.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_aenter_returns_self():
+    calc = _make_calc()
+
+    with (
+        patch.object(
+            Client,
+            "__aenter__",
+            new_callable=AsyncMock,
+            return_value=calc,
+        ),
+        patch.object(
+            Client,
+            "list_tools",
+            new_callable=AsyncMock,
+            return_value=[],
+        ),
+        patch.object(
+            Client,
+            "__aexit__",
+            new_callable=AsyncMock,
+            return_value=None,
+        ),
+    ):
+        returned = await calc.__aenter__()
+        assert returned is calc
+        await calc.__aexit__(None, None, None)
+
+
+@pytest.mark.asyncio
+async def test_aexit_delegates_to_super():
+    calc = _make_calc()
+
+    with (
+        patch.object(
+            Client,
+            "__aenter__",
+            new_callable=AsyncMock,
+            return_value=calc,
+        ),
+        patch.object(
+            Client,
+            "list_tools",
+            new_callable=AsyncMock,
+            return_value=[],
+        ),
+        patch.object(
+            Client,
+            "__aexit__",
+            new_callable=AsyncMock,
+            return_value=None,
+        ) as mock_exit,
+    ):
+        async with calc:
+            pass
+
+    mock_exit.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# list_tools — caching behaviour
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_list_tools_fetches_when_empty():
+    tools = [SimpleNamespace(name="sqrt", description="Square root")]
+    calc = _make_calc()
 
     with patch.object(
-        calc_mcp_client, "create_client", return_value=mock_client
+        Client,
+        "list_tools",
+        new_callable=AsyncMock,
+        return_value=tools,
+    ) as mock_parent_lt:
+        result = await calc.list_tools()
+
+    assert result == tools
+    assert CalcMCPClient._tools == tools
+    mock_parent_lt.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_tools_returns_cache_on_second_call():
+    tools = [SimpleNamespace(name="add", description="Add")]
+    calc = _make_calc()
+
+    with patch.object(
+        Client,
+        "list_tools",
+        new_callable=AsyncMock,
+        return_value=tools,
+    ) as mock_parent_lt:
+        first = await calc.list_tools()
+        second = await calc.list_tools()
+
+    assert first is second
+    # list_tools should only have been called once (cache hit)
+    mock_parent_lt.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_tools_skips_fetch_when_pre_populated():
+    existing = [SimpleNamespace(name="divide", description="Divide")]
+    CalcMCPClient._tools = existing
+    calc = _make_calc()
+
+    with patch.object(
+        Client,
+        "list_tools",
+        new_callable=AsyncMock,
+        return_value=[],
+    ) as mock_parent_lt:
+        result = await calc.list_tools()
+
+    assert result is existing
+    mock_parent_lt.assert_not_awaited()
+
+
+# ---------------------------------------------------------------------------
+# call_tool (inherited)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_call_tool_delegates_to_parent():
+    calc = _make_calc(call_result="5")
+    result = await calc.call_tool("add", {"a": 2, "b": 3})
+
+    assert result == "5"
+    calc.call_tool.assert_awaited_once_with("add", {"a": 2, "b": 3})
+
+
+@pytest.mark.asyncio
+async def test_call_tool_with_empty_arguments():
+    calc = _make_calc(call_result="ok")
+    result = await calc.call_tool("noop", {})
+
+    assert result == "ok"
+    calc.call_tool.assert_awaited_once_with("noop", {})
+
+
+# ---------------------------------------------------------------------------
+# to_openai_tools
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_to_openai_tools_converts_single_tool():
+    tools = [
+        mcp.types.Tool(
+            name="add",
+            description="Add two numbers",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "a": {"type": "number"},
+                    "b": {"type": "number"},
+                },
+                "required": ["a", "b"],
+            },
+        )
+    ]
+    CalcMCPClient._tools = tools
+    calc = _make_calc()
+    result = await calc.to_openai_tools()
+    assert len(result) == 1
+    assert result[0]["type"] == "function"
+    func = result[0]["function"]
+    assert func["name"] == "add"
+    assert func["description"] == "Add two numbers"
+    assert func["parameters"]["type"] == "object"
+    assert "a" in func["parameters"]["properties"]
+    assert "b" in func["parameters"]["properties"]
+
+
+@pytest.mark.asyncio
+async def test_to_openai_tools_multiple_tools():
+    tools = [
+        mcp.types.Tool(
+            name="add",
+            description="Add",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        mcp.types.Tool(
+            name="sqrt",
+            description="Square root",
+            inputSchema={
+                "type": "object",
+                "properties": {"a": {"type": "number"}},
+            },
+        ),
+    ]
+    CalcMCPClient._tools = tools
+    calc = _make_calc()
+    result = await calc.to_openai_tools()
+    assert len(result) == 2
+    assert result[0]["function"]["name"] == "add"
+    assert result[1]["function"]["name"] == "sqrt"
+
+
+@pytest.mark.asyncio
+async def test_to_openai_tools_empty_list():
+    calc = _make_calc()
+    with patch.object(
+        Client,
+        "list_tools",
+        new_callable=AsyncMock,
+        return_value=[],
     ):
-        await calc_mcp_client.run_client()
+        result = await calc.to_openai_tools()
+    assert result == []
 
-    assert mock_client.call_tool.await_count == 2
-    output = capsys.readouterr().out
-    assert "2 tools available" in output
+
+@pytest.mark.asyncio
+async def test_to_openai_tools_no_description():
+    tools = [
+        mcp.types.Tool(
+            name="noop",
+            inputSchema={"type": "object", "properties": {}},
+        )
+    ]
+    CalcMCPClient._tools = tools
+    calc = _make_calc()
+    result = await calc.to_openai_tools()
+    assert "description" not in result[0]["function"]
+
+
+@pytest.mark.asyncio
+async def test_to_openai_tools_preserves_input_schema():
+    schema = {
+        "type": "object",
+        "properties": {
+            "a": {
+                "type": "number",
+                "description": "First operand",
+            },
+            "b": {
+                "type": "number",
+                "description": "Second operand",
+            },
+        },
+        "required": ["a", "b"],
+    }
+    tools = [
+        mcp.types.Tool(
+            name="add",
+            description="Add",
+            inputSchema=schema,
+        )
+    ]
+    CalcMCPClient._tools = tools
+    calc = _make_calc()
+    result = await calc.to_openai_tools()
+    assert result[0]["function"]["parameters"] == schema
 
 
 # ---------------------------------------------------------------------------
-# main
+# Full round-trip (context manager + call_tool)
 # ---------------------------------------------------------------------------
 
 
-def test_main_calls_asyncio_run():
-    with patch.object(calc_mcp_client.asyncio, "run") as mock_run:
-        calc_mcp_client.main()
-        mock_run.assert_called_once()
+@pytest.mark.asyncio
+async def test_full_round_trip():
+    tools = [
+        SimpleNamespace(name="multiply", description="Multiply"),
+    ]
+    calc = _make_calc(tools=tools, call_result="21")
+
+    with (
+        patch.object(
+            Client,
+            "__aenter__",
+            new_callable=AsyncMock,
+            return_value=calc,
+        ),
+        patch.object(
+            Client,
+            "list_tools",
+            new_callable=AsyncMock,
+            return_value=tools,
+        ),
+        patch.object(
+            Client,
+            "__aexit__",
+            new_callable=AsyncMock,
+            return_value=None,
+        ),
+    ):
+        async with calc:
+            result = await calc.call_tool("multiply", {"a": 3, "b": 7})
+            assert result == "21"

@@ -42,60 +42,16 @@ Connects to the remote calculator MCP server, lists available tools,
 and calls each one with sample arguments to verify end-to-end
 connectivity.  Run standalone with::
 
-    poetry run python tests/integration/calc_mcp_client.py
+    poetry run python tests/integration/test_calc_mcp_client.py
 """
 
 import asyncio
+import json
 import logging
-import os
 
-from cryptography.fernet import Fernet
-from fastmcp import Client
-from fastmcp.client.auth import OAuth
-from key_value.aio.stores.disk import DiskStore
-from key_value.aio.wrappers.encryption import FernetEncryptionWrapper
-
-from math_ai_agent.config import (
-    get_callback_port,
-    get_token_dir,
-    get_url,
-    is_oauth,
-)
+from math_ai_agent.calc_mcp_client import CalcMCPClient
 
 logger = logging.getLogger(__name__)
-
-
-def create_client() -> Client:
-    """Create and return an MCP Client based on config.yaml settings.
-
-    Returns:
-        A ``fastmcp.Client`` configured for the calculator MCP server,
-        with OAuth authentication when enabled in config.yaml.
-    """
-    url = get_url()
-    logger.info("Creating HTTP MCP client: %s", url)
-
-    if is_oauth():
-        logger.info("OAuth enabled, using OAuthClient")
-        token_dir = get_token_dir()
-        logger.debug(
-            "Creating encrypted disk storage for OAuth tokens: %s",
-            token_dir,
-        )
-        encrypted_storage = FernetEncryptionWrapper(
-            key_value=DiskStore(directory=token_dir),
-            fernet=Fernet(os.environ["OAUTH_STORAGE_ENCRYPTION_KEY"]),
-        )
-        oauth = OAuth(
-            token_storage=encrypted_storage,
-            callback_port=get_callback_port(),
-            additional_client_metadata={
-                "token_endpoint_auth_method": "client_secret_post",
-            },
-        )
-        return Client(url, auth=oauth)
-
-    return Client(url)
 
 
 _SAMPLE_ARGS: dict[str, dict[str, float | int]] = {
@@ -120,11 +76,11 @@ _SAMPLE_ARGS: dict[str, dict[str, float | int]] = {
 
 async def run_client() -> None:
     """Connect to the MCP server, list and call each tool."""
-    client = create_client()
+    client = CalcMCPClient()
 
     async with client:
-        await client.ping()
-
+        openai_tools = await client.to_openai_tools()
+        print(f"Tools:\n{json.dumps(openai_tools, indent=2)}")
         tools = await client.list_tools()
         print(f"Connected — {len(tools)} tools available:\n")
         for tool in tools:

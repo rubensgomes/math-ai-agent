@@ -12,25 +12,28 @@ The application has three main components:
 
 1. **FastAPI web application** (`main.py`) -- serves a static HTML form at `/` and exposes a `POST /prompt/` endpoint that accepts a math question and returns an answer.
 
-2. **MCP client wrapper** (`mcp_calc.py`) -- async context manager that connects to an external calculator MCP server using the FastMCP library. Supports both plain HTTP and OAuth-authenticated connections. The calculator server exposes math tools (add, subtract, multiply, divide, power, sqrt, etc.) via MCP.
+2. **Calculator MCP client** (`calc_mcp_client.py`) -- extends `fastmcp.Client` to connect to an external calculator MCP server. Supports both plain HTTP and OAuth-authenticated connections. Caches the tool list via `list_tools()`, exposes inherited `call_tool()`, and provides `to_openai_tools()` to convert MCP tools to OpenAI function-calling format. The calculator server exposes math tools (add, subtract, multiply, divide, power, sqrt, etc.) via MCP.
 
-3. **MCP server** (`calc_mcp.py`) -- placeholder for a local MCP server implementation.
-
-4. **Configuration** (`config.py` + `config.yaml`) -- loads YAML-based configuration and sets up Python logging. Provides helper functions for accessing server URL, OAuth settings, timeouts, and token storage paths.
+3. **Configuration** (`config.py` + `config.yaml`) -- loads YAML-based configuration and sets up Python logging. Provides helper functions for accessing server URL, OAuth settings, timeouts, and token storage paths.
 
 ## Project Structure
 
 ```
 src/math_ai_agent/
-  main.py             # FastAPI application (web UI + /prompt endpoint)
-  calc_mcp.py         # MCP server (placeholder)
-  mcp_calc.py         # Async context manager for the calculator MCP server
-  config.py           # Configuration helpers (loads config.yaml, logging)
-  config.yaml         # Server, OAuth, and logging configuration
+  main.py               # FastAPI application (web UI + /prompt endpoint)
+  calc_mcp_client.py    # Calculator MCP client (extends fastmcp.Client)
+  llm.py                # LLM system instructions for the math tutor
+  config.py             # Configuration helpers (loads config.yaml, logging)
+  config.yaml           # Server, OAuth, and logging configuration
   static/
-    index.html        # Bootstrap dark-theme web UI served at /
+    index.html          # Bootstrap dark-theme web UI served at /
 tests/
-  test_main.py        # Test suite for the FastAPI application
+  integration/
+    test_calc_mcp_client.py  # Integration test for the MCP client
+    openai_client.py         # Integration test for the OpenAI client
+  test_calc_mcp_client.py    # Unit tests for calc_mcp_client.py
+  test_config.py             # Unit tests for config.py
+  test_main.py               # Unit tests for main.py
 ```
 
 ## Configuration

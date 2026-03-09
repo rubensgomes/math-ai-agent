@@ -36,11 +36,11 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""Async context-managed wrapper around the calculator MCP server.
+"""Calculator MCP client.
 
-Provides the ``CalcMCP`` class which connects to a remote calculator
-MCP server, caches its tool list, and exposes a ``call()`` method to
-invoke individual tools by name.
+Provides the ``CalcMCPClient`` class which extends ``fastmcp.Client``
+to connect to a remote calculator MCP server, cache its tool list,
+and expose inherited ``call_tool()`` / ``list_tools()`` methods.
 """
 
 import asyncio
@@ -51,7 +51,6 @@ import mcp.types
 from cryptography.fernet import Fernet
 from fastmcp import Client
 from fastmcp.client.auth import OAuth
-from fastmcp.client.client import CallToolResult
 from key_value.aio.stores.disk import DiskStore
 from key_value.aio.wrappers.encryption import FernetEncryptionWrapper
 
@@ -65,109 +64,23 @@ from math_ai_agent.config import (
 logger = logging.getLogger(__name__)
 
 
-class CalcMCP:
-    """Async context manager for the calculator MCP server.
+class CalcMCPClient(Client):
+    """Calculator MCP client extending ``fastmcp.Client``.
 
-    Maintains a class-level cache of available tools (populated on
-    first connection) and delegates tool invocations to the underlying
-    ``fastmcp.Client``.
+    Builds the correct transport and auth from ``config.yaml``,
+    pings on connect, and maintains a class-level tool cache.
 
     Usage::
 
-        async with CalcMCP() as calc:
-            result = await calc.call("add", {"a": 1, "b": 2})
+        async with CalcMCPClient() as calc:
+            result = await calc.call_tool("add", {"a": 1, "b": 2})
     """
 
-    tools: list[mcp.types.Tool] = []
+    _tools: list[mcp.types.Tool] = []
     _lock = asyncio.Lock()
 
     def __init__(self) -> None:
-        logger.debug("Instantiating CalcMCP")
-        self._client: Client = CalcMCP._create_client()
-
-    async def __aenter__(self) -> "CalcMCP":
-        """Connect to the MCP server and populate the tool cache."""
-        logger.debug("Connecting to Calculator MCP server")
-        await self._client.__aenter__()
-        logger.debug("Pinging MCP server")
-        await self._client.ping()
-        await self.ensure_tools()
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb) -> None:
-        """Disconnect from the MCP server."""
-        logger.debug("Closing CalcMCP")
-        await self._client.__aexit__(exc_type, exc, tb)
-
-    async def ensure_tools(self) -> list[mcp.types.Tool]:
-        """Populate the class-level tool cache if empty.
-
-        Thread-safe via an ``asyncio.Lock``.  Subsequent calls return
-        the cached list without contacting the server.
-
-        Returns:
-            The list of tools available on the MCP server.
-        """
-        async with CalcMCP._lock:
-            if not CalcMCP.tools:
-                logger.debug("CalcMCP.tools is empty: fetching from MCP server")
-                CalcMCP.tools = await self._client.list_tools()
-            return CalcMCP.tools
-
-    async def call(self, tool_name: str, arguments: dict) -> CallToolResult:
-        """Invoke a tool on the MCP server.
-
-        Args:
-            tool_name: Name of the tool to call.
-            arguments: Keyword arguments for the tool.
-
-        Returns:
-            The ``CallToolResult`` returned by the MCP server.
-        """
-        result = await self._client.call_tool(tool_name, arguments)
-        return result
-
-    @staticmethod
-    def to_openai_tools(
-        tools: list[mcp.types.Tool],
-    ) -> list[dict]:
-        """Convert MCP tools to OpenAI function-calling tool schema.
-
-        Args:
-            tools: MCP tool definitions to convert.
-
-        Returns:
-            A list of dicts in the OpenAI tool format::
-
-                [
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": "add",
-                            "description": "Add two numbers",
-                            "parameters": { ... }
-                        }
-                    },
-                    ...
-                ]
-        """
-        openai_tools: list[dict] = []
-        for tool in tools:
-            func: dict = {"name": tool.name}
-            if tool.description:
-                func["description"] = tool.description
-            func["parameters"] = tool.inputSchema
-            openai_tools.append({"type": "function", "function": func})
-        return openai_tools
-
-    @staticmethod
-    def _create_client() -> Client:
-        """Create and return an MCP Client based on config.yaml settings.
-
-        Returns:
-            A ``fastmcp.Client`` configured for the calculator MCP server,
-            with OAuth authentication when enabled in config.yaml.
-        """
+        logger.debug("Instantiating CalcMCPClient")
         url = get_url()
         logger.info("Creating HTTP MCP client: %s", url)
 
@@ -186,9 +99,75 @@ class CalcMCP:
                 token_storage=encrypted_storage,
                 callback_port=get_callback_port(),
                 additional_client_metadata={
-                    "token_endpoint_auth_method": "client_secret_post",
+                    "token_endpoint_auth_method": ("client_secret_post"),
                 },
             )
-            return Client(url, auth=oauth)
+            super().__init__(url, auth=oauth)
+        else:
+            super().__init__(url)
 
-        return Client(url)
+    async def __aenter__(self) -> "CalcMCPClient":
+        """Connect to the MCP server and populate the tool cache."""
+        logger.debug("Connecting to Calculator MCP server")
+        await super().__aenter__()
+        logger.debug("Pinging MCP server")
+        await self.ping()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        """Disconnect from the MCP server."""
+        logger.debug("Closing CalcMCPClient")
+        await super().__aexit__(exc_type, exc, tb)
+
+    async def list_tools(self) -> list[mcp.types.Tool]:
+        """Return cached tools, fetching from the server on first call.
+
+        Thread-safe via an ``asyncio.Lock``.  Subsequent calls return
+        the cached list without contacting the server.
+
+        Returns:
+            The list of tools available on the MCP server.
+        """
+        async with CalcMCPClient._lock:
+            if not CalcMCPClient._tools:
+                logger.debug(
+                    "CalcMCPClient._tools is empty:" " fetching from MCP server"
+                )
+                CalcMCPClient._tools = await super().list_tools()
+            return CalcMCPClient._tools
+
+    async def to_openai_tools(self) -> list[dict]:
+        """Convert cached MCP tools to OpenAI function-calling schema.
+
+        Calls ``list_tools()`` to retrieve the (cached) tool list and
+        converts each tool to the OpenAI function-calling format.
+
+        Returns:
+            A list of dicts in the OpenAI tool format::
+
+                [
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "add",
+                            "description": "Add two numbers",
+                            "parameters": { ... }
+                        }
+                    },
+                    ...
+                ]
+        """
+        logger.debug("Converting MCP tools to OpenAI format")
+        mcp_tools: list[mcp.types.Tool] = await self.list_tools()
+        openai_tools: list[dict] = []
+        for tool in mcp_tools:
+            func: dict = {"name": tool.name}
+            if tool.description:
+                func["description"] = tool.description
+            func["parameters"] = tool.inputSchema
+            openai_tools.append({"type": "function", "function": func})
+        logger.debug(
+            "Converted %d MCP tools to OpenAI format",
+            len(openai_tools),
+        )
+        return openai_tools

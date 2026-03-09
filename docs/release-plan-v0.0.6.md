@@ -13,10 +13,10 @@
 
 ## Release Checklist
 
-- [ ] Commit all changes to main
-- [ ] Create version tag `v0.0.6`
-- [ ] Push commits and tag to origin
-- [ ] Create GitHub release
+- [x] Commit all changes to main
+- [x] Create version tag `v0.0.6`
+- [x] Push commits and tag to origin
+- [x] Create GitHub release
 
 ## Changes in This Release
 
