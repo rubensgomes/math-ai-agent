@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.8] - 2026-03-09
+
+### Changed
+
+- Renamed `tests/integration/openai_client.py` to `test_openai_client.py` (pytest discovery convention)
+
+### Fixed
+
+- Fixed `chat.completions` response handling: replaced invalid `response.output_text` with `response.choices[0].message.content`
+- Updated docstring run command to reference renamed filename
+- Updated README.md, CHANGELOG.md, and llms.txt with renamed filename
+
 ## [0.0.7] - 2026-03-08
 
 ### Changed
@@ -37,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `OLLAMA.md` documentation for installing and running Ollama with local LLM models
 - `llm.py` module with system instructions for the math tutor LLM
 - `openai` DEBUG-level logger in `config.yaml` for OpenAI SDK request/response tracing
-- Logging integration in `tests/integration/openai_client.py` using project config
+- Logging integration in `tests/integration/test_openai_client.py` using project config
 
 ### Changed
 

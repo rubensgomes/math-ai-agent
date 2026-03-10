@@ -41,7 +41,7 @@
 Sends a simple prompt to verify end-to-end connectivity with the
 OpenAI API.  Run standalone with::
 
-    poetry run python tests/integration/openai_client.py
+    poetry run python tests/integration/test_openai_client.py
 """
 
 import logging
@@ -70,7 +70,8 @@ _BASE_URL = "http://localhost:11434/v1"
 
 # Ollama models installed locally (FREE)
 # _MODEL = "llama2" # Meta Open-Source 7B size
-_MODEL = "qwen3.5"  # https://ollama.com/library/qwen3.5
+# _MODEL = "qwen3.5"  # https://ollama.com/library/qwen3.5
+_MODEL = "phi"  # https://ollama.com/library/phi
 
 
 def run_client() -> None:
@@ -82,6 +83,8 @@ def run_client() -> None:
     )
 
     prompt = "How do I check if a Python object is an instance of a class?"
+
+    logger.debug("========== %s API CALL (BEGIN) ==========", "LEGACY")
     logger.debug("Sending prompt: %s", prompt)
 
     response = client.responses.create(
@@ -93,6 +96,24 @@ def run_client() -> None:
     logger.info("Response received successfully")
     logger.debug("Response text: %s", response.output_text)
     print(response.output_text)
+    logger.debug("========== %s API CALL (END) ==========", "LEGACY")
+
+    logger.debug("========== %s API CALL (BEGIN) ==========", "NEW")
+    logger.debug("Sending prompt: %s", prompt)
+
+    response = client.chat.completions.create(
+        model=_MODEL,
+        messages=[
+            {"role": "system", "content": _SYSTEM_INSTRUCTIONS},
+            {"role": "user", "content": prompt},
+        ],
+    )
+
+    logger.info("Response received successfully")
+    result = response.choices[0].message.content
+    logger.debug("Response text: %s", result)
+    print(result)
+    logger.debug("========== %s API CALL (END) ==========", "NEW")
 
 
 def main() -> None:

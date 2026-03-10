@@ -44,4 +44,4 @@ integration test code, and updates all project documentation.
 - [x] Run `export SOURCE_DATE_EPOCH=$(date +%s); poetry build -v` — fix any issues
 - [x] Update version in `pyproject.toml` to `0.0.7`
 - [x] Update `CHANGELOG.md` with release changes
-- [ ] Commit all changes, create tag `v0.0.7`, push, and create GitHub release
+- [x] Commit all changes, create tag `v0.0.7`, push, and create GitHub release
