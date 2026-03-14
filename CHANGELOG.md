@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.9] - 2026-03-14
+
+### Changed
+
+- Refactored `OpenAIClient` in `llm.py` to accept `_api_key`, `_base_url`, `_model`, and `_calcmcp_tools` as constructor parameters (removed module-level constants)
+- Replaced synchronous `OpenAI` client with `AsyncOpenAI` for proper async support
+- Updated module and class docstrings in `llm.py` to reflect current architecture
+- Updated `README.md` project structure with `models.py`, `test_llm.py`, and corrected `llm.py` description
+
+### Added
+
+- `tests/integration/test_llm.py` integration test for the `OpenAIClient` wrapper
+- Input validation in `OpenAIClient.__init__` for all constructor parameters
+- Singleton guard to ensure `OpenAIClient` class variables are initialized only once
+- Comprehensive logging across all functions in `src/` modules
+- Logging in `tests/integration/test_openai_client.py` with timing and model/API type display
+- Try/except error handling in `tests/integration/test_openai_client.py`
+- Docstrings to all classes and functions in `src/` modules
+- Guard for `None` content in `create_response` when LLM returns tool calls
+- Debug logging of all message attributes in `create_response`
+
+### Fixed
+
+- Fixed `OpenAIClient.__init__` assigning to local variables instead of class variables
+- Fixed circular dependency in `config.py` where `logger.debug` was called before logger was initialized
+- Fixed `test_llm.py`: corrected method name, fixed nested dict, added `asyncio.run()`, proper context manager usage
+- Removed unused imports from `llm.py` and `test_llm.py`
+
 ## [0.0.8] - 2026-03-09
 
 ### Changed

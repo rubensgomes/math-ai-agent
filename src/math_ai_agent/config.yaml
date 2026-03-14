@@ -30,7 +30,7 @@ logging:
             stream: ext://sys.stderr
     loggers:
         math_ai_agent:
-            level: INFO
+            level: DEBUG
             handlers:
                 - console
             propagate: false

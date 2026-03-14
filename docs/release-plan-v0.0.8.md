@@ -23,7 +23,7 @@
 - [x] Run `poetry build -v` — built successfully
 - [x] Ensure `CHANGELOG.md` exists and is updated for v0.0.8
 - [x] Bump version in `pyproject.toml` to 0.0.8
-- [ ] Commit all changes to main
-- [ ] Create version tag `v0.0.8`
-- [ ] Push commit and tag to remote
-- [ ] Create GitHub release for v0.0.8
+- [x] Commit all changes to main
+- [x] Create version tag `v0.0.8`
+- [x] Push commit and tag to remote
+- [x] Create GitHub release for v0.0.8

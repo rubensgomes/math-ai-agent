@@ -80,6 +80,7 @@ class CalcMCPClient(Client):
     _lock = asyncio.Lock()
 
     def __init__(self) -> None:
+        """Initialize the calculator MCP client."""
         logger.debug("Instantiating CalcMCPClient")
         url = get_url()
         logger.info("Creating HTTP MCP client: %s", url)

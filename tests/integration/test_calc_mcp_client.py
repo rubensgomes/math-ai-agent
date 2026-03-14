@@ -76,17 +76,17 @@ _SAMPLE_ARGS: dict[str, dict[str, float | int]] = {
 
 async def run_client() -> None:
     """Connect to the MCP server, list and call each tool."""
-    client = CalcMCPClient()
+    calcmcp_client = CalcMCPClient()
 
-    async with client:
-        openai_tools = await client.to_openai_tools()
+    async with calcmcp_client:
+        openai_tools = await calcmcp_client.to_openai_tools()
         print(f"Tools:\n{json.dumps(openai_tools, indent=2)}")
-        tools = await client.list_tools()
+        tools = await calcmcp_client.list_tools()
         print(f"Connected — {len(tools)} tools available:\n")
         for tool in tools:
             print(f"  - {tool.name}: {tool.description}")
             args = _SAMPLE_ARGS.get(tool.name, {})
-            result = await client.call_tool(tool.name, args)
+            result = await calcmcp_client.call_tool(tool.name, args)
             print(f"    call_tool({tool.name}, {args}) => {result}\n")
 
 

@@ -43,33 +43,57 @@ Exposes a root endpoint (``GET /``) that serves the HTML form and a
 an answer.
 """
 
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+
+from math_ai_agent.calc_mcp_client import CalcMCPClient
+from math_ai_agent.config import configure_logging
+from math_ai_agent.models import MathQuestion
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+# -------------------------------------------------
+# Create the FastAPI app instance
+# -------------------------------------------------
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
-class MathQuestion(BaseModel):
-    """The question to be answered by the LLM model."""
+# -------------------------------------------------
+# Helpers
+# -------------------------------------------------
+async def get_calcmcp_client():
+    """Create and connect a CalcMCPClient instance."""
+    logger.debug("Creating CalcMCPClient instance")
+    calcmcp_client = CalcMCPClient()
+    await calcmcp_client.__aenter__()
+    logger.info("CalcMCPClient connected")
+    return calcmcp_client
 
-    question: str
 
-
+# ----- Routes -----
 @app.get("/", response_class=HTMLResponse)
 async def root() -> str:
     """Serve the main HTML page."""
+    logger.debug("Serving root HTML page")
     return (STATIC_DIR / "index.html").read_text()
 
 
 @app.post("/prompt/")
 async def prompt(payload: MathQuestion) -> dict[str, str]:
     """Accept a math question and return an answer."""
+    logger.info("Received prompt: %s", payload.question)
+    # 1) Connect to MCP server
+    calcmcp_client = await get_calcmcp_client()
+    # 2) Discover MCP tools
+    calcmcp_tools = await calcmcp_client.to_openai_tools()
+    # 3) TODO....
     question = payload.question.strip()
     return {"answer": question}

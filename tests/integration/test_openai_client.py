@@ -41,10 +41,15 @@
 Sends a simple prompt to verify end-to-end connectivity with the
 OpenAI API.  Run standalone with::
 
-    poetry run python tests/integration/test_openai_client.py
+    poetry run python tests/integration/test_openai_client.py**
+
+** Ensure the LLM defined below is running locally (e.g., ollama run phi)
+
 """
 
 import logging
+import os
+import time
 
 from openai import OpenAI
 
@@ -57,21 +62,22 @@ _SYSTEM_INSTRUCTIONS = "You are a Python expert programmer.\n"
 
 # OpenAI API key stored in my secrets. (NOT FREE)
 # _API_KEY = os.environ.get("OPENAI_API_KEY")
-# Ollama locally running server. Any string works for local Ollama. (FREE)
-_API_KEY = "ollama"
-
-# OpenAI large models (NOT FREE)
 # _BASE_URL = "https://api.openai.com/v1"
-# Ollama locally running server. (FREE)
-_BASE_URL = "http://localhost:11434/v1"
-
-# OpenAI large model (NOT FREE)
 # _MODEL = "gpt-5.2"
 
-# Ollama models installed locally (FREE)
+# GitHub Marketplace Model
+_API_KEY = os.environ.get("RUBENS_PAT_TOKEN")
+_BASE_URL = "https://models.github.ai/inference"
+# _MODEL = "openai/gpt-5"
+_MODEL = "openai/gpt-4.1"
+
+
+# Ollama locally running server. Any string works for local Ollama. (FREE)
+# _API_KEY = "ollama"
+# _BASE_URL = "http://localhost:11434/v1"
 # _MODEL = "llama2" # Meta Open-Source 7B size
 # _MODEL = "qwen3.5"  # https://ollama.com/library/qwen3.5
-_MODEL = "phi"  # https://ollama.com/library/phi
+# _MODEL = "phi"  # https://ollama.com/library/phi
 
 
 def run_client() -> None:
@@ -84,36 +90,32 @@ def run_client() -> None:
 
     prompt = "How do I check if a Python object is an instance of a class?"
 
-    logger.debug("========== %s API CALL (BEGIN) ==========", "LEGACY")
-    logger.debug("Sending prompt: %s", prompt)
-
-    response = client.responses.create(
-        model=_MODEL,
-        instructions=_SYSTEM_INSTRUCTIONS,
-        input=prompt,
-    )
-
-    logger.info("Response received successfully")
-    logger.debug("Response text: %s", response.output_text)
-    print(response.output_text)
-    logger.debug("========== %s API CALL (END) ==========", "LEGACY")
-
     logger.debug("========== %s API CALL (BEGIN) ==========", "NEW")
     logger.debug("Sending prompt: %s", prompt)
 
-    response = client.chat.completions.create(
-        model=_MODEL,
-        messages=[
-            {"role": "system", "content": _SYSTEM_INSTRUCTIONS},
-            {"role": "user", "content": prompt},
-        ],
-    )
+    try:
+        start = time.perf_counter()
+        response = client.chat.completions.create(
+            model=_MODEL,
+            messages=[
+                {"role": "system", "content": _SYSTEM_INSTRUCTIONS},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        elapsed = time.perf_counter() - start
 
-    logger.info("Response received successfully")
-    result = response.choices[0].message.content
-    logger.debug("Response text: %s", result)
-    print(result)
-    logger.debug("========== %s API CALL (END) ==========", "NEW")
+        logger.info("Response received successfully")
+        result = response.choices[0].message.content
+        logger.debug("Response text: %s", result)
+        print(result)
+        print(f"\n[Model: {_MODEL} | API: NEW | " f"Time: {elapsed:.2f}s]\n")
+    except Exception:
+        logger.exception(
+            "Failed to get response from model %s via NEW API",
+            _MODEL,
+        )
+    finally:
+        logger.debug("========== %s API CALL (END) ==========", "NEW")
 
 
 def main() -> None:

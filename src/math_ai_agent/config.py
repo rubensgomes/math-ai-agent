@@ -85,6 +85,7 @@ def configure_logging() -> None:
 configure_logging()
 
 logger = logging.getLogger(__name__)
+logger.debug("Config path resolved to %s", _CONFIG_PATH)
 
 
 def get_timeout() -> int:
