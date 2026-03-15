@@ -36,8 +36,8 @@
 - [x] 4. Run `poetry run pytest` — fix any issues
 - [x] 5. Run `export SOURCE_DATE_EPOCH=$(date +%s); poetry build -v` — fix any issues
 - [x] 6. Ensure `CHANGELOG.md` exists and update with release changes
-- [ ] 7. Commit all changes to main, create tag `v0.0.10`, push, and create GitHub release
+- [x] 7. Commit all changes to main, create tag `v0.0.10`, push, and create GitHub release
 
 ## Status
 
-- [ ] Release complete
+- [x] Release complete
