@@ -36,15 +36,17 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""Integration test for the OpenAIClient LLM wrapper.
+"""Integration test for LLM tool calling via the OpenAIClient.
 
-Connects to the calculator MCP server, discovers tools, then sends
-a math prompt to the LLM via ``OpenAIClient``.  Run standalone with::
+Connects to the calculator MCP server, discovers tools, then runs
+an interactive agent loop that sends math prompts to the LLM and
+dispatches tool calls back to the MCP server.  Run standalone with::
 
-    poetry run python tests/integration/test_llm.py
+    poetry run python tests/integration/test_llm_tool.py
 """
 
 import asyncio
+import json
 import logging
 import os
 
@@ -68,7 +70,7 @@ _MODEL = "openai/gpt-4.1"
 _SYSTEM_INSTRUCTIONS = """
 You are a careful math assistant tutor helping solve math problems. Always 
 write a short plan first. Do NOT do arithmetic in your head. For every
-mathe operation, request a tool call to the calculator. After tool results,
+math operation, request a tool call to the calculator. After tool results,
 continue. Provide final answer with explanation.
 """
 
@@ -82,27 +84,83 @@ async def get_mcp_tools() -> list[dict]:
         return tools
 
 
+async def call_tool(tool_name: str, args) -> str:
+    """Call a Calculator MCP server tool.
+
+    Args:
+        tool_name: The name of the MCP tool to invoke.
+        args: The arguments dict to pass to the tool.
+
+    Returns:
+        The string representation of the tool result.
+    """
+    logger.info("Connecting to Calculator MCP server")
+    async with CalcMCPClient() as calcmcp_client:
+        logger.info("Calling calculator MCP tool %s with %s", tool_name, args)
+        result = await calcmcp_client.call_tool(tool_name, args)
+        # TODO: how to propertly process result?
+        return str(result.data)
+
+
 async def prompt_llm() -> None:
-    """Connect to LLM and send a prompt."""
+    """Run the interactive agent loop with LLM tool calling.
+
+    Discovers MCP tools, then enters a loop that reads user input,
+    sends it to the LLM, and dispatches any tool calls to the
+    calculator MCP server until the LLM produces a final text
+    response.
+    """
     logger.info("Starting LLM prompt test")
+    memory = [{"role": "system", "content": _SYSTEM_INSTRUCTIONS}]
     tools = await get_mcp_tools()
-    logger.debug(
-        "Creating OpenAIClient with base_url=%s, model=%s",
-        _BASE_URL,
-        _MODEL,
-    )
     llm = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, tools)
-    messages = [
-        {"role": "system", "content": _SYSTEM_INSTRUCTIONS},
-        {"role": "user", "content": "4+4?"},
-    ]
-    logger.debug("Sending prompt: %s", messages[-1]["content"])
-    result = await llm.create_response(messages)
-    logger.info("LLM response: %s", result)
+
+    # -------------------------
+    # Agent Loop
+    # -------------------------
+    while True:
+
+        user_input = input("User: ")
+
+        memory.append({"role": "user", "content": user_input})
+        logger.debug("Sending user prompt: %s", user_input)
+
+        response = await llm.create_response(memory)
+        logger.info("LLM response: %s", response)
+
+        message = response.choices[0].message
+        memory.append(message)
+
+        # Keep looping while the model requests tool calls
+        while message.tool_calls:
+            for tool_call in message.tool_calls:
+                tool_name = tool_call.function.name
+                tool_call_id = tool_call.id
+                args = json.loads(tool_call.function.arguments)
+                logger.info(
+                    "Calling calculator tool: %s(%s)",
+                    tool_name,
+                    args,
+                )
+                result = await call_tool(tool_name, args)
+                memory.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call_id,
+                        "content": result,
+                    }
+                )
+
+            followup = await llm.create_response(memory)
+            message = followup.choices[0].message
+            memory.append(message)
+
+        logger.info("Assistant: %s", message.content)
+        print("Assistant:", message.content)
 
 
 async def main() -> None:
-    """Entry point for the OpenAI client."""
+    """Entry point for the LLM tool-calling integration test."""
     logger.info("Running integration test for OpenAIClient")
     await prompt_llm()
     logger.info("Integration test completed")

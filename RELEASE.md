@@ -10,7 +10,7 @@
     - dnsutils package
     - curl 8.5.0 or later
     - gawk 5.2.1 or later
-    - gh version 2.81.0 or later (GitHub CLI tool)
+    - gh version 2.45.0 or later (GitHub CLI tool)
     - git version 2.43.0 or later
     - grep version 3.11 or later
 

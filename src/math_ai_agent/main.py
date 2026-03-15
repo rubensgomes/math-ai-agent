@@ -69,8 +69,12 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 # -------------------------------------------------
 # Helpers
 # -------------------------------------------------
-async def get_calcmcp_client():
-    """Create and connect a CalcMCPClient instance."""
+async def get_calcmcp_client() -> CalcMCPClient:
+    """Create and connect a CalcMCPClient instance.
+
+    Returns:
+        A connected CalcMCPClient ready for tool calls.
+    """
     logger.debug("Creating CalcMCPClient instance")
     calcmcp_client = CalcMCPClient()
     await calcmcp_client.__aenter__()
@@ -81,14 +85,25 @@ async def get_calcmcp_client():
 # ----- Routes -----
 @app.get("/", response_class=HTMLResponse)
 async def root() -> str:
-    """Serve the main HTML page."""
+    """Serve the main HTML page.
+
+    Returns:
+        The HTML content of the index page.
+    """
     logger.debug("Serving root HTML page")
     return (STATIC_DIR / "index.html").read_text()
 
 
 @app.post("/prompt/")
 async def prompt(payload: MathQuestion) -> dict[str, str]:
-    """Accept a math question and return an answer."""
+    """Accept a math question and return an answer.
+
+    Args:
+        payload: The validated math question from the request body.
+
+    Returns:
+        A dict containing the ``answer`` key with the response.
+    """
     logger.info("Received prompt: %s", payload.question)
     # 1) Connect to MCP server
     calcmcp_client = await get_calcmcp_client()

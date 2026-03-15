@@ -47,6 +47,7 @@ import logging
 from typing import Any, Optional
 
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletion
 
 from math_ai_agent.config import configure_logging
 
@@ -102,8 +103,10 @@ class OpenAIClient:
         OpenAIClient.model = _model
         logger.info("OpenAIClient initialized successfully")
 
-    async def create_response(self, messages: list[dict[str, Any]]) -> str:
-        """Send messages to the LLM and return the response text."""
+    async def create_response(
+        self, messages: list[dict[str, Any]]
+    ) -> ChatCompletion:
+        """Send messages to the LLM and return the ChatCompletion response."""
         logger.debug(
             "Sending %d message(s) to model %s",
             len(messages),
@@ -112,7 +115,7 @@ class OpenAIClient:
         logger.debug(
             "Using %d tool(s)", len(OpenAIClient.calcmcp_tools)  # type: ignore[arg-type]
         )
-        response = await OpenAIClient.openai_client.chat.completions.create(  # type: ignore[union-attr]
+        response: ChatCompletion = await OpenAIClient.openai_client.chat.completions.create(  # type: ignore[union-attr]
             model=OpenAIClient.model,  # type: ignore[arg-type]
             messages=messages,  # type: ignore[arg-type]
             tools=OpenAIClient.calcmcp_tools,  # type: ignore[arg-type]
@@ -140,7 +143,6 @@ class OpenAIClient:
                         tc.function.name,  # type: ignore[union-attr]
                         tc.function.arguments,  # type: ignore[union-attr]
                     )
-            return ""
         logger.info("Received response from model %s", OpenAIClient.model)
         logger.debug("Response text: %s", message.content)
-        return message.content
+        return response

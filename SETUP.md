@@ -323,7 +323,7 @@ environment to successfully run the following commands.
 ### Edit Configurations in PyCharm
 
 1. Menu: Run -> Edit Configurations...
-2. Ensure The "Run" drop-down menu shows "poetry (<proj-name>) Python 3.14.2 ~
+2. Ensure The "Run" drop-down menu shows "poetry (<proj-name>) Python 3.14.3 ~
    /.cache/pypoetry/virtualenvs/<proj-name>-...".
    See [PyCharm Edit Configurations Image](docs/img/pycharm_edit_configurations.jpg)
 3. Click: "+" -> Python

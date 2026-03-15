@@ -32,6 +32,7 @@ tests/
     test_calc_mcp_client.py  # Integration test for the MCP client
     test_openai_client.py    # Integration test for the OpenAI client
     test_llm.py              # Integration test for the OpenAIClient wrapper
+    test_llm_tool.py         # Integration test for LLM with tool calling
   test_calc_mcp_client.py    # Unit tests for calc_mcp_client.py
   test_config.py             # Unit tests for config.py
   test_main.py               # Unit tests for main.py

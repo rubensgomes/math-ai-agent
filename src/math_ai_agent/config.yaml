@@ -64,6 +64,18 @@ logging:
             handlers:
                 - console
             propagate: false
+        # Integration tests (via pytest)
+        tests:
+            level: DEBUG
+            handlers:
+                - console
+            propagate: false
+        # Integration tests (run standalone)
+        __main__:
+            level: DEBUG
+            handlers:
+                - console
+            propagate: false
     root:
         level: WARNING
         handlers:

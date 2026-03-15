@@ -36,6 +36,8 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
+"""Pydantic models for request validation."""
+
 from pydantic import BaseModel
 
 
