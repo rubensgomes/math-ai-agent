@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.11] - 2026-03-15
+
+### Changed
+
+- Refactored `OpenAIClient` from singleton with class variables to a regular instance-based class
+- Renamed `OpenAIClient.__init__` parameters: removed leading underscores (`_api_key` → `api_key`, `_base_url` → `base_url`, `_model` → `model`, `_calcmcp_tools` → `calcmcp_tools`)
+- Changed `create_response` from `@staticmethod` back to instance method
+- Replaced piecemeal response logging in `create_response` with full JSON dump via `response.model_dump()`
+- Formatted tool definitions debug log as indented JSON for readability
+- Renamed `memory` variable to `messages` in integration tests for consistency
+- Refactored agent loop in `test_llm_tool.py` to use `match`/`case` on `finish_reason`
+- Updated docstrings in `llm.py`, `test_llm.py`, `test_llm_tool.py`
+- Updated project structure in `README.md` and `llms.txt` with missing `test_llm.py` unit test
+- Fixed isort version `0.0.1+` → `8.0.1+` in `SETUP.md`
+
+### Fixed
+
+- Fixed `test_llm_tool.py`: infinite `while message.tool_calls` loop replaced with `for` loop
+- Fixed `test_llm_tool.py`: typo "propertly" → "properly"
+- Fixed `test_llm.py`: typo "mathe" → "math" in system instructions
+- Fixed trailing whitespace in system instructions
+- Removed unused `patch` import from `tests/test_llm.py`
+- Removed duplicate and redundant log statements across integration tests
+
 ## [0.0.10] - 2026-03-15
 
 ### Added

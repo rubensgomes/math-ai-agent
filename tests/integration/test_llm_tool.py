@@ -39,8 +39,8 @@
 """Integration test for LLM tool calling via the OpenAIClient.
 
 Connects to the calculator MCP server, discovers tools, then runs
-an interactive agent loop that sends math prompts to the LLM and
-dispatches tool calls back to the MCP server.  Run standalone with::
+an agent loop that sends a math prompt to the LLM and dispatches
+tool calls back to the MCP server.  Run standalone with::
 
     poetry run python tests/integration/test_llm_tool.py
 """
@@ -63,12 +63,8 @@ _BASE_URL = "https://models.github.ai/inference"
 # _MODEL = "openai/gpt-5"
 _MODEL = "openai/gpt-4.1"
 
-# 1. Tool / Function Calling Prompt (Agent Pattern)
-# This pattern allows the model to decide when to use external tools (APIs,
-# calculators, databases).
-
 _SYSTEM_INSTRUCTIONS = """
-You are a careful math assistant tutor helping solve math problems. Always 
+You are a careful math assistant tutor helping solve math problems. Always
 write a short plan first. Do NOT do arithmetic in your head. For every
 math operation, request a tool call to the calculator. After tool results,
 continue. Provide final answer with explanation.
@@ -76,7 +72,12 @@ continue. Provide final answer with explanation.
 
 
 async def get_mcp_tools() -> list[dict]:
-    """Connect to the Calculator MCP server, and list the tools."""
+    """Connect to the Calculator MCP server and list the tools.
+
+    Returns:
+        OpenAI-format tool definitions discovered from the
+        MCP server.
+    """
     logger.info("Connecting to Calculator MCP server")
     async with CalcMCPClient() as calcmcp_client:
         tools = await calcmcp_client.to_openai_tools()
@@ -84,8 +85,8 @@ async def get_mcp_tools() -> list[dict]:
         return tools
 
 
-async def call_tool(tool_name: str, args) -> str:
-    """Call a Calculator MCP server tool.
+async def call_tool(tool_name: str, args: dict) -> str:
+    """Call a calculator MCP tool over a new connection.
 
     Args:
         tool_name: The name of the MCP tool to invoke.
@@ -94,69 +95,81 @@ async def call_tool(tool_name: str, args) -> str:
     Returns:
         The string representation of the tool result.
     """
-    logger.info("Connecting to Calculator MCP server")
     async with CalcMCPClient() as calcmcp_client:
-        logger.info("Calling calculator MCP tool %s with %s", tool_name, args)
+        logger.info(
+            "Calling calculator MCP tool %s with %s",
+            tool_name,
+            args,
+        )
         result = await calcmcp_client.call_tool(tool_name, args)
-        # TODO: how to propertly process result?
+        logger.debug(
+            "Tool %s result:\n%s",
+            tool_name,
+            json.dumps(result.structured_content, indent=2),
+        )
         return str(result.data)
 
 
 async def prompt_llm() -> None:
     """Run the interactive agent loop with LLM tool calling.
 
-    Discovers MCP tools, then enters a loop that reads user input,
-    sends it to the LLM, and dispatches any tool calls to the
-    calculator MCP server until the LLM produces a final text
-    response.
+    Discovers MCP tools, reads a math prompt from the user,
+    then enters an agent loop that sends it to the LLM and
+    dispatches any tool calls to the calculator MCP server
+    until the LLM produces a final text response.
     """
     logger.info("Starting LLM prompt test")
-    memory = [{"role": "system", "content": _SYSTEM_INSTRUCTIONS}]
+    messages = [{"role": "system", "content": _SYSTEM_INSTRUCTIONS}]
     tools = await get_mcp_tools()
     llm = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, tools)
+
+    user_input = input("User: ")
+    messages.append({"role": "user", "content": user_input})
+    logger.debug("Sending user prompt: %s", user_input)
 
     # -------------------------
     # Agent Loop
     # -------------------------
     while True:
-
-        user_input = input("User: ")
-
-        memory.append({"role": "user", "content": user_input})
-        logger.debug("Sending user prompt: %s", user_input)
-
-        response = await llm.create_response(memory)
-        logger.info("LLM response: %s", response)
-
+        response = await llm.create_response(messages)
         message = response.choices[0].message
-        memory.append(message)
+        finish_reason = response.choices[0].finish_reason
 
-        # Keep looping while the model requests tool calls
-        while message.tool_calls:
-            for tool_call in message.tool_calls:
-                tool_name = tool_call.function.name
-                tool_call_id = tool_call.id
-                args = json.loads(tool_call.function.arguments)
-                logger.info(
-                    "Calling calculator tool: %s(%s)",
-                    tool_name,
-                    args,
-                )
-                result = await call_tool(tool_name, args)
-                memory.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": tool_call_id,
-                        "content": result,
-                    }
-                )
+        match finish_reason:
+            case "stop":
+                logger.info("Assistant: %s", message.content)
+                break
 
-            followup = await llm.create_response(memory)
-            message = followup.choices[0].message
-            memory.append(message)
+            case "length":
+                logger.error("Token limit reached.")
+                break
 
-        logger.info("Assistant: %s", message.content)
-        print("Assistant:", message.content)
+            case "tool_calls":
+                messages.append(message)
+                for tool_call in message.tool_calls:
+                    tool_name = tool_call.function.name
+                    tool_call_id = tool_call.id
+                    args = json.loads(tool_call.function.arguments)
+                    result = await call_tool(tool_name, args)
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call_id,
+                            "content": result,
+                        }
+                    )
+                continue
+
+            case "content_filter":
+                logger.error("Blocked by safety reasons.")
+                break
+
+            case None:
+                # Happens during streaming before final chunk
+                pass
+
+            case _:
+                raise ValueError(f"Unknown finish_reason: {finish_reason}")
 
 
 async def main() -> None:

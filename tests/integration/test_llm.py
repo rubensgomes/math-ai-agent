@@ -61,20 +61,21 @@ _BASE_URL = "https://models.github.ai/inference"
 # _MODEL = "openai/gpt-5"
 _MODEL = "openai/gpt-4.1"
 
-# 1. Tool / Function Calling Prompt (Agent Pattern)
-# This pattern allows the model to decide when to use external tools (APIs,
-# calculators, databases).
-
 _SYSTEM_INSTRUCTIONS = """
-You are a careful math assistant tutor helping solve math problems. Always 
+You are a careful math assistant tutor helping solve math problems. Always
 write a short plan first. Do NOT do arithmetic in your head. For every
-mathe operation, request a tool call to the calculator. After tool results,
+math operation, request a tool call to the calculator. After tool results,
 continue. Provide final answer with explanation.
 """
 
 
 async def get_mcp_tools() -> list[dict]:
-    """Connect to the Calculator MCP server, and list the tools."""
+    """Connect to the Calculator MCP server and list the tools.
+
+    Returns:
+        OpenAI-format tool definitions discovered from the
+        MCP server.
+    """
     logger.info("Connecting to Calculator MCP server")
     async with CalcMCPClient() as calcmcp_client:
         tools = await calcmcp_client.to_openai_tools()
@@ -83,26 +84,24 @@ async def get_mcp_tools() -> list[dict]:
 
 
 async def prompt_llm() -> None:
-    """Connect to LLM and send a prompt."""
+    """Discover MCP tools and send a single math prompt.
+
+    Connects to the calculator MCP server to discover tools,
+    builds a message history with system instructions and a
+    user prompt, then sends it to the LLM.
+    """
     logger.info("Starting LLM prompt test")
+    messages = [{"role": "system", "content": _SYSTEM_INSTRUCTIONS}]
     tools = await get_mcp_tools()
-    logger.debug(
-        "Creating OpenAIClient with base_url=%s, model=%s",
-        _BASE_URL,
-        _MODEL,
-    )
     llm = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, tools)
-    messages = [
-        {"role": "system", "content": _SYSTEM_INSTRUCTIONS},
-        {"role": "user", "content": "4+4?"},
-    ]
+    messages.append({"role": "user", "content": "4+4?"})
     logger.debug("Sending prompt: %s", messages[-1]["content"])
-    result = await llm.create_response(messages)
-    logger.info("LLM response: %s", result)
+    response = await llm.create_response(messages)
+    logger.info("Assistant: %s", response.choices[0].message.content)
 
 
 async def main() -> None:
-    """Entry point for the OpenAI client."""
+    """Entry point for the LLM integration test."""
     logger.info("Running integration test for OpenAIClient")
     await prompt_llm()
     logger.info("Integration test completed")

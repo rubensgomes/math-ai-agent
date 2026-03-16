@@ -12,7 +12,7 @@ Ubuntu:
 - cookiecutter 2.6.0+
 - gh version 2.45.0+ (GitHub CLI tool)
 - git version 2.43.0+
-- isort 0.0.1+
+- isort 8.0.1+
 - pip 25.3+
 - pipx 1.4.3+
 - poe 0.42.1+

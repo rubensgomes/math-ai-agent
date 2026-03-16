@@ -38,13 +38,14 @@
 
 """Async OpenAI client wrapper for LLM chat completions.
 
-Provides the ``OpenAIClient`` class that manages a shared
+Provides the ``OpenAIClient`` class that wraps an
 ``AsyncOpenAI`` instance and sends chat completion requests
 to the configured LLM model with tool definitions.
 """
 
+import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion
@@ -56,93 +57,89 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIClient:
-    """Singleton async OpenAI client for LLM chat completions.
+    """Async OpenAI client for LLM chat completions.
 
-    Class variables are initialized once on first instantiation;
-    subsequent calls to ``__init__`` are no-ops.
+    Each instance holds its own ``AsyncOpenAI`` client,
+    model name, and tool definitions.
     """
-
-    openai_client: Optional[AsyncOpenAI] = None
-    calcmcp_tools: Optional[list[dict[str, Any]]] = None
-    model: Optional[str] = None
 
     def __init__(
         self,
-        _api_key: str,
-        _base_url: str,
-        _model: str,
-        _calcmcp_tools: list[dict],
+        api_key: str,
+        base_url: str,
+        model: str,
+        calcmcp_tools: list[dict],
     ) -> None:
-        """Initialize the OpenAI client once with the given parameters."""
-        if OpenAIClient.openai_client is not None:
-            logger.debug("OpenAIClient already initialized, skipping")
-            return
-        if not _api_key:
-            logger.error("_api_key is empty or None")
-            raise ValueError("_api_key must not be empty")
-        if not _base_url:
-            logger.error("_base_url is empty or None")
-            raise ValueError("_base_url must not be empty")
-        if not _model:
-            logger.error("_model is empty or None")
-            raise ValueError("_model must not be empty")
-        if not _calcmcp_tools:
-            logger.error("_calcmcp_tools is empty or None")
-            raise ValueError("_calcmcp_tools must not be empty")
+        """Create an ``AsyncOpenAI`` client for chat completions.
+
+        All parameters are validated and must be non-empty.
+
+        Args:
+            api_key: API key for the OpenAI-compatible service.
+            base_url: Base URL of the inference endpoint.
+            model: Model identifier to use for completions.
+            calcmcp_tools: OpenAI-format tool definitions from
+                the calculator MCP server.
+
+        Raises:
+            ValueError: If any parameter is empty or ``None``.
+        """
+        if not api_key:
+            logger.error("api_key is empty or None")
+            raise ValueError("api_key must not be empty")
+        if not base_url:
+            logger.error("base_url is empty or None")
+            raise ValueError("base_url must not be empty")
+        if not model:
+            logger.error("model is empty or None")
+            raise ValueError("model must not be empty")
+        if not calcmcp_tools:
+            logger.error("calcmcp_tools is empty or None")
+            raise ValueError("calcmcp_tools must not be empty")
         logger.info(
-            "Initializing OpenAIClient with base_url=%s, model=%s",
-            _base_url,
-            _model,
+            "Initializing OpenAIClient with "
+            "base_url=%s, model=%s, tool_count=%d",
+            base_url,
+            model,
+            len(calcmcp_tools),
         )
-        logger.debug("Registering %d tool(s)", len(_calcmcp_tools))
-        OpenAIClient.openai_client = AsyncOpenAI(
-            api_key=_api_key,
-            base_url=_base_url,
+        logger.debug(
+            "Tool definitions:\n%s",
+            json.dumps(calcmcp_tools, indent=2),
         )
-        OpenAIClient.calcmcp_tools = _calcmcp_tools
-        OpenAIClient.model = _model
-        logger.info("OpenAIClient initialized successfully")
+        self.openai_client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+        )
+        self.calcmcp_tools = calcmcp_tools
+        self.model = model
 
     async def create_response(
         self, messages: list[dict[str, Any]]
     ) -> ChatCompletion:
-        """Send messages to the LLM and return the ChatCompletion response."""
+        """Send messages to the LLM and return the response.
+
+        Args:
+            messages: Conversation history as a list of
+                role/content dicts.
+
+        Returns:
+            The ``ChatCompletion`` from the configured model.
+        """
         logger.debug(
             "Sending %d message(s) to model %s",
             len(messages),
-            OpenAIClient.model,
+            self.model,
         )
-        logger.debug(
-            "Using %d tool(s)", len(OpenAIClient.calcmcp_tools)  # type: ignore[arg-type]
-        )
-        response: ChatCompletion = await OpenAIClient.openai_client.chat.completions.create(  # type: ignore[union-attr]
-            model=OpenAIClient.model,  # type: ignore[arg-type]
-            messages=messages,  # type: ignore[arg-type]
-            tools=OpenAIClient.calcmcp_tools,  # type: ignore[arg-type]
-        )
-        logger.debug("Finish reason: %s", response.choices[0].finish_reason)
-        message = response.choices[0].message
-        logger.debug(
-            "Message attributes: role=%s, content=%s, "
-            "tool_calls=%s, function_call=%s, refusal=%s",
-            message.role,
-            message.content,
-            message.tool_calls,
-            message.function_call,
-            message.refusal,
-        )
-        if message.content is None:
-            logger.warning(
-                "Model %s returned tool calls instead of text",
-                OpenAIClient.model,
+        response: ChatCompletion = (
+            await self.openai_client.chat.completions.create(
+                model=self.model,
+                messages=messages,  # type: ignore[arg-type]
+                tools=self.calcmcp_tools,  # type: ignore[arg-type]
             )
-            if message.tool_calls:
-                for tc in message.tool_calls:
-                    logger.debug(
-                        "Tool call requested: %s(%s)",
-                        tc.function.name,  # type: ignore[union-attr]
-                        tc.function.arguments,  # type: ignore[union-attr]
-                    )
-        logger.info("Received response from model %s", OpenAIClient.model)
-        logger.debug("Response text: %s", message.content)
+        )
+        logger.debug(
+            "LLM response:\n%s",
+            json.dumps(response.model_dump(), indent=2),
+        )
         return response

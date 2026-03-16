@@ -39,7 +39,7 @@
 """Unit tests for :mod:`math_ai_agent.llm`."""
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -71,18 +71,6 @@ _TOOLS = [
 ]
 
 
-@pytest.fixture(autouse=True)
-def _reset_singleton():
-    """Reset OpenAIClient class variables before each test."""
-    OpenAIClient.openai_client = None
-    OpenAIClient.calcmcp_tools = None
-    OpenAIClient.model = None
-    yield
-    OpenAIClient.openai_client = None
-    OpenAIClient.calcmcp_tools = None
-    OpenAIClient.model = None
-
-
 def _make_chat_completion(content="42", tool_calls=None, finish_reason="stop"):
     """Build a fake ChatCompletion-like response object."""
     message = SimpleNamespace(
@@ -96,7 +84,42 @@ def _make_chat_completion(content="42", tool_calls=None, finish_reason="stop"):
         message=message,
         finish_reason=finish_reason,
     )
-    return SimpleNamespace(choices=[choice])
+    response = SimpleNamespace(choices=[choice])
+
+    def _dump_tool_calls(tc_list):
+        if tc_list is None:
+            return None
+        return [
+            {
+                "id": tc.id,
+                "function": {
+                    "name": tc.function.name,
+                    "arguments": tc.function.arguments,
+                },
+            }
+            for tc in tc_list
+        ]
+
+    response.model_dump = lambda: {
+        "choices": [
+            {
+                "finish_reason": finish_reason,
+                "message": {
+                    "role": "assistant",
+                    "content": content,
+                    "tool_calls": _dump_tool_calls(tool_calls),
+                    "function_call": None,
+                    "refusal": None,
+                },
+            }
+        ]
+    }
+    return response
+
+
+def _make_client():
+    """Create an OpenAIClient instance with test parameters."""
+    return OpenAIClient(_API_KEY, _BASE_URL, _MODEL, _TOOLS)
 
 
 # ---------------------------------------------------------------------------
@@ -104,52 +127,42 @@ def _make_chat_completion(content="42", tool_calls=None, finish_reason="stop"):
 # ---------------------------------------------------------------------------
 
 
-def test_init_sets_class_variables():
-    """First instantiation sets class variables."""
+def test_init_sets_instance_attributes():
+    """Instantiation sets instance attributes."""
     client = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, _TOOLS)
-    assert OpenAIClient.openai_client is not None
-    assert OpenAIClient.calcmcp_tools is _TOOLS
-    assert OpenAIClient.model == _MODEL
+    assert client.openai_client is not None
+    assert client.calcmcp_tools is _TOOLS
+    assert client.model == _MODEL
     assert isinstance(client, OpenAIClient)
-
-
-def test_init_singleton_skips_second_init():
-    """Second instantiation is a no-op."""
-    OpenAIClient(_API_KEY, _BASE_URL, _MODEL, _TOOLS)
-    original_client = OpenAIClient.openai_client
-
-    OpenAIClient("other-key", "other-url", "other-model", [{"x": 1}])
-    assert OpenAIClient.openai_client is original_client
-    assert OpenAIClient.model == _MODEL
 
 
 def test_init_empty_api_key_raises():
     """Empty api_key raises ValueError."""
-    with pytest.raises(ValueError, match="_api_key must not be empty"):
+    with pytest.raises(ValueError, match="api_key must not be empty"):
         OpenAIClient("", _BASE_URL, _MODEL, _TOOLS)
 
 
 def test_init_empty_base_url_raises():
     """Empty base_url raises ValueError."""
-    with pytest.raises(ValueError, match="_base_url must not be empty"):
+    with pytest.raises(ValueError, match="base_url must not be empty"):
         OpenAIClient(_API_KEY, "", _MODEL, _TOOLS)
 
 
 def test_init_empty_model_raises():
     """Empty model raises ValueError."""
-    with pytest.raises(ValueError, match="_model must not be empty"):
+    with pytest.raises(ValueError, match="model must not be empty"):
         OpenAIClient(_API_KEY, _BASE_URL, "", _TOOLS)
 
 
 def test_init_empty_tools_raises():
     """Empty tools list raises ValueError."""
-    with pytest.raises(ValueError, match="_calcmcp_tools must not be empty"):
+    with pytest.raises(ValueError, match="calcmcp_tools must not be empty"):
         OpenAIClient(_API_KEY, _BASE_URL, _MODEL, [])
 
 
 def test_init_none_api_key_raises():
     """None api_key raises ValueError."""
-    with pytest.raises(ValueError, match="_api_key must not be empty"):
+    with pytest.raises(ValueError, match="api_key must not be empty"):
         OpenAIClient(None, _BASE_URL, _MODEL, _TOOLS)
 
 
@@ -162,10 +175,10 @@ def test_init_none_api_key_raises():
 async def test_create_response_returns_completion():
     """create_response returns the ChatCompletion from the API."""
     fake_response = _make_chat_completion(content="The answer is 8")
-    client = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, _TOOLS)
+    client = _make_client()
 
     mock_create = AsyncMock(return_value=fake_response)
-    OpenAIClient.openai_client.chat = SimpleNamespace(
+    client.openai_client.chat = SimpleNamespace(
         completions=SimpleNamespace(create=mock_create)
     )
 
@@ -196,10 +209,10 @@ async def test_create_response_with_tool_calls():
         tool_calls=[tool_call],
         finish_reason="tool_calls",
     )
-    client = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, _TOOLS)
+    client = _make_client()
 
     mock_create = AsyncMock(return_value=fake_response)
-    OpenAIClient.openai_client.chat = SimpleNamespace(
+    client.openai_client.chat = SimpleNamespace(
         completions=SimpleNamespace(create=mock_create)
     )
 
@@ -220,10 +233,10 @@ async def test_create_response_with_none_content_no_tool_calls():
         tool_calls=None,
         finish_reason="stop",
     )
-    client = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, _TOOLS)
+    client = _make_client()
 
     mock_create = AsyncMock(return_value=fake_response)
-    OpenAIClient.openai_client.chat = SimpleNamespace(
+    client.openai_client.chat = SimpleNamespace(
         completions=SimpleNamespace(create=mock_create)
     )
 
@@ -238,10 +251,10 @@ async def test_create_response_with_none_content_no_tool_calls():
 async def test_create_response_passes_all_messages():
     """create_response forwards the full message history."""
     fake_response = _make_chat_completion(content="done")
-    client = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, _TOOLS)
+    client = _make_client()
 
     mock_create = AsyncMock(return_value=fake_response)
-    OpenAIClient.openai_client.chat = SimpleNamespace(
+    client.openai_client.chat = SimpleNamespace(
         completions=SimpleNamespace(create=mock_create)
     )
 
@@ -278,10 +291,10 @@ async def test_create_response_multiple_tool_calls():
         tool_calls=tool_calls,
         finish_reason="tool_calls",
     )
-    client = OpenAIClient(_API_KEY, _BASE_URL, _MODEL, _TOOLS)
+    client = _make_client()
 
     mock_create = AsyncMock(return_value=fake_response)
-    OpenAIClient.openai_client.chat = SimpleNamespace(
+    client.openai_client.chat = SimpleNamespace(
         completions=SimpleNamespace(create=mock_create)
     )
 
