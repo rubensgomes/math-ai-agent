@@ -13,7 +13,7 @@
 - [x] Ensure `CHANGELOG.md` exists and is up to date
 - [x] Update `CHANGELOG.md` with current release changes
 - [x] Bump version in `pyproject.toml` to `0.0.11`
-- [ ] Commit all changes to main
-- [ ] Create version tag `v0.0.11`
-- [ ] Push commits and tag to remote
-- [ ] Create GitHub release
+- [x] Commit all changes to main
+- [x] Create version tag `v0.0.11`
+- [x] Push commits and tag to remote
+- [x] Create GitHub release
