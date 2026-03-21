@@ -41,7 +41,7 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from math_ai_agent.main import MathQuestion, app
+from math_ai_agent.main import Prompt, app
 
 
 @pytest.mark.asyncio
@@ -96,7 +96,7 @@ async def test_prompt_returns_answer():
         transport=transport, base_url="http://test"
     ) as client:
         response = await client.post(
-            "/prompt/", json={"question": "What is 2+2?"}
+            "/prompt/", json={"text": "What is 2+2?"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -110,7 +110,7 @@ async def test_prompt_strips_whitespace():
     async with AsyncClient(
         transport=transport, base_url="http://test"
     ) as client:
-        response = await client.post("/prompt/", json={"question": "  hello  "})
+        response = await client.post("/prompt/", json={"text": "  hello  "})
         assert response.status_code == 200
         assert response.json()["answer"] == "hello"
 
@@ -170,10 +170,10 @@ async def test_prompt_get_method_not_allowed():
 
 
 def test_math_question_model():
-    q = MathQuestion(question="What is 5*3?")
-    assert q.question == "What is 5*3?"
+    q = Prompt(text="What is 5*3?")
+    assert q.text == "What is 5*3?"
 
 
 def test_math_question_model_requires_question():
     with pytest.raises(Exception):
-        MathQuestion()
+        Prompt()

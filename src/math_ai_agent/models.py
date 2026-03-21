@@ -41,7 +41,7 @@
 from pydantic import BaseModel
 
 
-class MathQuestion(BaseModel):
-    """The question to be answered by the LLM model."""
+class Prompt(BaseModel):
+    """The text message sent by the user in the web chat."""
 
-    question: str
+    text: str

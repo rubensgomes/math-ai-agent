@@ -24,17 +24,19 @@
         crossorigin="anonymous">
 </head>
 <body>
-<header></header>
-<noscript>
-    <div class="fixed-top mt-7 fw-bold alert alert-danger"
-         role="alert">
-        Your browser does not have Javascript enabled. This web page does not
-        work correctly without Javascript. See <a class="link-primary"
-                                                  href="https://www.enable-javascript.com/"
-                                                  rel="external">instructions</a>
-        to enable Javascript.
-    </div>
-</noscript>
+<header>
+    <noscript>
+        <div class="fixed-top mt-7 fw-bold alert alert-danger"
+             role="alert">
+            Your browser does not have Javascript enabled. This web page does
+            not work correctly without Javascript. See <a class="link-primary"
+                                                      href="https://www.enable-javascript.com/"
+                                                      rel="external">instructions</a>
+            to enable Javascript.
+        </div>
+    </noscript>
+</header>
+>
 <div class="container">
     <h2>Math AI Agent!</h2>
     <p>Ask a math question. The app will use the MCP calculator for all
@@ -50,7 +52,9 @@
                       rows="3"></textarea>
         </div>
         <div class="col-12">
-            <button id="button-submit-id" type="button" class="btn btn-primary">Submit</button>
+            <button id="button-submit-id" type="button" class="btn btn-primary">
+                Submit
+            </button>
         </div>
     </form>
 
@@ -69,11 +73,11 @@
 
 <script>
     document.getElementById("button-submit-id").onclick = async () => {
-        const question = document.getElementById("textarea-question-id").value;
+        const prompt = document.getElementById("textarea-question-id").value;
         const res = await fetch("/prompt/", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({question})
+            body: JSON.stringify({text: prompt})
         });
         const data = await res.json();
         document.getElementById("textarea-response-id").value = data.answer;

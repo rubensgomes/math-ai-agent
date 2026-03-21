@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.12] - 2026-03-21
+
+### Added
+
+- `tests/integration/app.py` FastAPI integration test application
+- `tests/integration/app_text.txt` sample text fixture for integration tests
+- `uvicorn` dev dependency for running integration test server
+- Module docstring workflow description in `main.py`
+
+### Changed
+
+- Renamed `MathQuestion` model to `Prompt` with field `question` → `text`
+- Updated `POST /prompt/` endpoint and frontend JS to use `Prompt.text`
+- Updated `<noscript>` block and button formatting in `index.html`
+- Bumped `fastmcp` 3.1.0 → 3.1.1
+- Bumped `openai` 2.26.0 → 2.29.0
+- Bumped `black` 26.3.0 → 26.3.1
+- Bumped `coverage` 7.13.4 → 7.13.5
+- Bumped `pytest-cov` 7.0.0 → 7.1.0
+- Updated project structure in `README.md` and `llms.txt` with new integration test files
+
+### Fixed
+
+- Fixed `test_main.py`: two tests still sending `{"question": ...}` instead of `{"text": ...}` after model rename
+
 ## [0.0.11] - 2026-03-15
 
 ### Changed
