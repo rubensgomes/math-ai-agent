@@ -16,4 +16,4 @@ and documentation.
 - [x] Ensure `CHANGELOG.md` exists and is up to date
 - [x] Update `CHANGELOG.md` with current release changes
 - [x] Bump version to 0.0.12 in `pyproject.toml`
-- [ ] Commit all changes, create tag `v0.0.12`, push, and create GitHub release
+- [x] Commit all changes, create tag `v0.0.12`, push, and create GitHub release
