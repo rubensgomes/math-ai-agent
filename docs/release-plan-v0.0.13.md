@@ -41,4 +41,4 @@
 - [x] 5. Run `export SOURCE_DATE_EPOCH=$(date +%s); poetry build -v` and fix any issues
 - [x] 6. Update `CHANGELOG.md` with current release changes
 - [x] 7. Bump version to `0.0.13` in `pyproject.toml`
-- [ ] 8. Commit all changes to main, create tag `v0.0.13`, push, and create GitHub release
+- [x] 8. Commit all changes to main, create tag `v0.0.13`, push, and create GitHub release
