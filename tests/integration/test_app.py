@@ -36,17 +36,14 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""FastAPI application serving the Math AI Agent web interface.
+"""Live integration test for the FastAPI web server.
 
-Exposes a root endpoint (``GET /``) that serves the HTML form and a
-``POST /prompt/`` endpoint that accepts a math question and returns
-an answer.
-
-Main program workflow:
-
-1. Launch a FastAPI web server with the following endpoints:
+It launches a FastAPI web server with the following endpoints:
     - ``GET /`` returns the index.html page.
-    - ``POST /prompt/`` accepts a math question and returns a response.
+    - ``POST /prompt/`` submits user prompt and returns same prompt back.
+
+From the project root folder run:
+    poetry run uvicorn tests.integration.test_app:app --reload
 """
 
 import logging
@@ -56,36 +53,19 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from math_ai_agent.calc_mcp_client import CalcMCPClient
 from math_ai_agent.config import configure_logging
 from math_ai_agent.models import Prompt
 
 configure_logging()
 logger = logging.getLogger(__name__)
 
-STATIC_DIR = Path(__file__).parent / "static"
+STATIC_DIR = Path(__file__).parent.parent.parent / "src/math_ai_agent/static"
 
 # -------------------------------------------------
 # Create the FastAPI app instance
 # -------------------------------------------------
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-
-# -------------------------------------------------
-# Helpers
-# -------------------------------------------------
-async def get_calcmcp_client() -> CalcMCPClient:
-    """Create and connect a CalcMCPClient instance.
-
-    Returns:
-        A connected CalcMCPClient ready for tool calls.
-    """
-    logger.debug("Creating CalcMCPClient instance")
-    calcmcp_client = CalcMCPClient()
-    await calcmcp_client.__aenter__()
-    logger.info("CalcMCPClient connected")
-    return calcmcp_client
 
 
 # ----- Routes -----
@@ -96,7 +76,7 @@ async def root() -> str:
     Returns:
         The HTML content of the index page.
     """
-    logger.debug("Serving root HTML page")
+    logger.debug("Serving root HTML page: %s%s", STATIC_DIR, "/index.html")
     return (STATIC_DIR / "index.html").read_text()
 
 
@@ -105,16 +85,12 @@ async def prompt(payload: Prompt) -> dict[str, str]:
     """Accept a prompt text from the user and return an answer.
 
     Args:
-        payload: The validated prompt question from the request body.
+        payload: The validated question from the request body.
 
     Returns:
         A dict containing the ``answer`` key with the response.
     """
-    logger.info("Received prompt: %s", payload.text)
-    # 1) Connect to MCP server
-    calcmcp_client = await get_calcmcp_client()
-    # 2) Discover MCP tools
-    calcmcp_tools = await calcmcp_client.to_openai_tools()
-    # 3) TODO....
-    question = payload.text.strip()
-    return {"answer": question}
+    logger.debug("Received prompt: %s", payload.text)
+    prompt_text = payload.text.strip()
+    logger.debug("Response: %s", prompt_text)
+    return {"answer": prompt_text}

@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.13] - 2026-04-03
+
+### Changed
+
+- Renamed `main.py` to `app.py` (FastAPI application module)
+- Renamed `tests/test_main.py` to `tests/test_app.py`
+- Renamed `tests/integration/app.py` to `tests/integration/test_app.py`
+- Refactored `get_mcp_tools()` to use `async with` context manager, fixing resource leak from manual `__aenter__()` call
+- Changed `_SYSTEM_INSTRUCTIONS` from triple-quoted string to implicit concatenation, removing leading newline
+- Updated all docstrings in `app.py` to follow Google Python Style Guide (added `Args`, `Returns`, `Raises` sections)
+- Improved `get_mcp_tools()` return type from `list[dict]` to `list[dict[str, object]]`
+- Fixed `agent_loop` return type annotation from `None` to `str`
+- Fixed `None` finish_reason case to `continue` instead of falling through
+- Replaced f-string logging with `%s` lazy formatting
+- Updated `CLAUDE.md`, `README.md`, `llms.txt` with renamed file references
+- Updated `TODO.md` with completed docstring review item
+- Updated `test_prompt_returns_answer` and `test_prompt_strips_whitespace` to mock `agent_loop`
+- Added `_API_KEY` validation with `RuntimeError` in `agent_loop`
+- Added mypy type fixes (`list[Any]` context, `assert tool_calls`, `type: ignore` for union-attr)
+
+### Removed
+
+- Removed `get_calcmcp_client()` helper (leaked async context manager)
+- Removed commented-out `_MODEL = "openai/gpt-5"` dead code
+- Removed redundant MCP connection/discovery in `/prompt/` endpoint
+- Removed stale numbered step comments in `/prompt/` handler
+
 ## [0.0.12] - 2026-03-21
 
 ### Added

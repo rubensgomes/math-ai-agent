@@ -36,12 +36,16 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""Unit tests for :mod:`math_ai_agent.main`."""
+"""Unit tests for :mod:`math_ai_agent.app`."""
+
+# TODO: refactor this unit test so that it does NOT start OAuth authentication.
+
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from math_ai_agent.main import Prompt, app
+from math_ai_agent.app import Prompt, app
 
 
 @pytest.mark.asyncio
@@ -90,29 +94,39 @@ async def test_root_contains_form_elements():
 
 
 @pytest.mark.asyncio
-async def test_prompt_returns_answer():
+@patch(
+    "math_ai_agent.app.agent_loop",
+    new_callable=AsyncMock,
+    return_value="The answer is 4.",
+)
+async def test_prompt_returns_answer(mock_agent_loop):
     transport = ASGITransport(app=app)
     async with AsyncClient(
         transport=transport, base_url="http://test"
     ) as client:
-        response = await client.post(
-            "/prompt/", json={"text": "What is 2+2?"}
-        )
+        response = await client.post("/prompt/", json={"text": "What is 2+2?"})
         assert response.status_code == 200
         data = response.json()
         assert "answer" in data
-        assert data["answer"] == "What is 2+2?"
+        assert data["answer"] == "The answer is 4."
+    mock_agent_loop.assert_awaited_once_with("What is 2+2?")
 
 
 @pytest.mark.asyncio
-async def test_prompt_strips_whitespace():
+@patch(
+    "math_ai_agent.app.agent_loop",
+    new_callable=AsyncMock,
+    return_value="hello response",
+)
+async def test_prompt_strips_whitespace(mock_agent_loop):
     transport = ASGITransport(app=app)
     async with AsyncClient(
         transport=transport, base_url="http://test"
     ) as client:
         response = await client.post("/prompt/", json={"text": "  hello  "})
         assert response.status_code == 200
-        assert response.json()["answer"] == "hello"
+        assert response.json()["answer"] == "hello response"
+    mock_agent_loop.assert_awaited_once_with("hello")
 
 
 @pytest.mark.asyncio

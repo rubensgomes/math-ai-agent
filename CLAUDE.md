@@ -12,7 +12,7 @@ MCP server to answer math questions via a FastAPI web interface.
 poetry install
 
 # Run the FastAPI server
-poetry run uvicorn math_ai_agent.main:app --reload
+poetry run uvicorn math_ai_agent.app:app --reload
 
 # Run the MCP integration test client
 poetry run python tests/integration/test_calc_mcp_client.py

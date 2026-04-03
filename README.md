@@ -19,7 +19,7 @@ integration.
 
 ```
 src/math_ai_agent/
-  main.py               # FastAPI application (web UI + /prompt endpoint)
+  app.py                # FastAPI application (web UI + /prompt endpoint)
   calc_mcp_client.py    # Calculator MCP client (extends fastmcp.Client)
   llm.py                # Async OpenAI client wrapper for LLM chat completions
   models.py             # Pydantic models (Prompt) for request validation
@@ -33,12 +33,12 @@ tests/
     test_openai_client.py    # Integration test for the raw OpenAI SDK
     test_llm.py              # Integration test for the OpenAIClient wrapper
     test_llm_tool.py         # Integration test for LLM with tool calling
-    app.py                   # FastAPI integration test application
+    test_app.py              # FastAPI integration test application
     app_text.txt             # Sample text fixture for integration tests
   test_calc_mcp_client.py    # Unit tests for calc_mcp_client.py
   test_config.py             # Unit tests for config.py
   test_llm.py                # Unit tests for llm.py
-  test_main.py               # Unit tests for main.py
+  test_app.py                # Unit tests for app.py
 ```
 
 ## Configuration
@@ -70,14 +70,14 @@ cd math-ai-agent
 poetry install
 
 # Run the FastAPI server
-poetry run uvicorn math_ai_agent.main:app --reload
+poetry run uvicorn math_ai_agent.app:app --reload
 
 # Change to the project root folder
 cd $(git rev-parse --show-toplevel) || exit
 # Run the MCP integration test client
 poetry run python tests/integration/test_calc_mcp_client.py
 # Run the FastAPI web server test
-poetry run uvicorn tests.integration.app:app --reload
+poetry run uvicorn tests.integration.test_app:app --reload
 ```
 
 ## License

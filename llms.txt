@@ -10,7 +10,7 @@ This project is a Python application built with FastAPI and FastMCP. It provides
 
 The application has three main components:
 
-1. **FastAPI web application** (`main.py`) -- serves a static HTML form at `/` and exposes a `POST /prompt/` endpoint that accepts a math question and returns an answer.
+1. **FastAPI web application** (`app.py`) -- serves a static HTML form at `/` and exposes a `POST /prompt/` endpoint that accepts a math question and returns an answer.
 
 2. **Calculator MCP client** (`calc_mcp_client.py`) -- extends `fastmcp.Client` to connect to an external calculator MCP server. Supports both plain HTTP and OAuth-authenticated connections. Caches the tool list via `list_tools()`, exposes inherited `call_tool()`, and provides `to_openai_tools()` to convert MCP tools to OpenAI function-calling format. The calculator server exposes math tools (add, subtract, multiply, divide, power, sqrt, etc.) via MCP.
 
@@ -20,7 +20,7 @@ The application has three main components:
 
 ```
 src/math_ai_agent/
-  main.py               # FastAPI application (web UI + /prompt endpoint)
+  app.py                # FastAPI application (web UI + /prompt endpoint)
   calc_mcp_client.py    # Calculator MCP client (extends fastmcp.Client)
   llm.py                # Async OpenAI client wrapper for LLM chat completions
   models.py             # Pydantic models (Prompt) for request validation
@@ -34,12 +34,12 @@ tests/
     test_openai_client.py    # Integration test for the raw OpenAI SDK
     test_llm.py              # Integration test for the OpenAIClient wrapper
     test_llm_tool.py         # Integration test for LLM with tool calling
-    app.py                   # FastAPI integration test application
+    test_app.py              # FastAPI integration test application
     app_text.txt             # Sample text fixture for integration tests
   test_calc_mcp_client.py    # Unit tests for calc_mcp_client.py
   test_config.py             # Unit tests for config.py
   test_llm.py                # Unit tests for llm.py
-  test_main.py               # Unit tests for main.py
+  test_app.py                # Unit tests for app.py
 ```
 
 ## Configuration

@@ -20,3 +20,15 @@ client = OpenAI(
 client = OpenAI(
     timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0),
 )
+
+
+## src/math_ai_agent/app.py
+- break the app.py code into modular areas, and delegate calls to modules.  
+  Need to see patterns used in OpenAI codebase
+- check if the tool requested by the LLM is supported or registered
+- add number of tokens consumed in error log when LLM reaches limit
+- create a debug log message that displays several details in the LMM 
+  response including number of tokens consumed so far
+- add exceptions types (e.g., security exception when llm does not accpe 
+  content)
+- should we use some AI Python framework for coding agents?
