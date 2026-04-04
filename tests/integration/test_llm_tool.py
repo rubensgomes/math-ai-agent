@@ -50,9 +50,9 @@ import json
 import logging
 import os
 
-from math_ai_agent.calc_mcp_client import CalcMCPClient
 from math_ai_agent.config import configure_logging
-from math_ai_agent.llm import OpenAIClient
+from math_ai_agent.llm.llm import OpenAIClient
+from math_ai_agent.mcp.calc_client import CalcMCPClient
 
 configure_logging()
 logger = logging.getLogger(__name__)

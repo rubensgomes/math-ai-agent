@@ -43,7 +43,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from math_ai_agent.llm import OpenAIClient
+from math_ai_agent.llm.llm import OpenAIClient
 
 # ---------------------------------------------------------------------------
 # Helpers

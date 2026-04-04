@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.14] - 2026-04-04
+
+### Added
+
+- `src/math_ai_agent/mcp/` sub-package with `__init__.py`
+- `src/math_ai_agent/llm/` sub-package with `__init__.py`
+
+### Changed
+
+- Moved `calc_mcp_client.py` into `mcp/` sub-package and renamed to `calc_client.py`
+- Moved `llm.py` into `llm/` sub-package
+- Moved `get_mcp_tools()` and `call_tool()` from `app.py` to `mcp/calc_client.py`
+- Moved `agent_loop()` and LLM configuration constants from `app.py` to `llm/llm.py`
+- Updated module docstrings in `llm/llm.py` and `mcp/calc_client.py` to reflect new contents
+- Fixed `CalcMCPClient.list_tools()` signature to match superclass (`max_pages` parameter)
+- Renamed `tests/test_calc_mcp_client.py` to `tests/test_calc_client.py`
+- Renamed `tests/integration/test_calc_mcp_client.py` to `tests/integration/test_calc_client.py`
+- Updated all imports across source and test files for new module paths
+- Simplified `app.py` to only contain FastAPI routes, delegating to `llm` and `mcp` sub-packages
+
 ## [0.0.13] - 2026-04-03
 
 ### Changed

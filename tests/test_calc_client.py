@@ -36,7 +36,7 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""Unit tests for :mod:`math_ai_agent.calc_mcp_client`."""
+"""Unit tests for :mod:`math_ai_agent.mcp.calc_client`."""
 
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -46,8 +46,8 @@ import pytest
 from cryptography.fernet import Fernet
 from fastmcp import Client
 
-from math_ai_agent import calc_mcp_client
-from math_ai_agent.calc_mcp_client import CalcMCPClient
+from math_ai_agent.mcp import calc_client
+from math_ai_agent.mcp.calc_client import CalcMCPClient
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -69,8 +69,8 @@ def _patch_no_oauth():
     """Patch config to disable OAuth and stub Client.__init__."""
     with (
         patch.object(Client, "__init__", return_value=None) as mock_init,
-        patch.object(calc_mcp_client, "is_oauth", return_value=False),
-        patch.object(calc_mcp_client, "get_url", return_value=_URL),
+        patch.object(calc_client, "is_oauth", return_value=False),
+        patch.object(calc_client, "get_url", return_value=_URL),
     ):
         yield mock_init
 
@@ -82,13 +82,13 @@ def _patch_oauth(monkeypatch):
     monkeypatch.setenv("OAUTH_STORAGE_ENCRYPTION_KEY", key)
     with (
         patch.object(Client, "__init__", return_value=None) as mock_init,
-        patch.object(calc_mcp_client, "is_oauth", return_value=True),
-        patch.object(calc_mcp_client, "get_url", return_value=_URL),
+        patch.object(calc_client, "is_oauth", return_value=True),
+        patch.object(calc_client, "get_url", return_value=_URL),
         patch.object(
-            calc_mcp_client, "get_token_dir", return_value="/tmp/test-tokens"
+            calc_client, "get_token_dir", return_value="/tmp/test-tokens"
         ) as mock_td,
         patch.object(
-            calc_mcp_client, "get_callback_port", return_value=10000
+            calc_client, "get_callback_port", return_value=10000
         ) as mock_port,
     ):
         yield mock_init, mock_td, mock_port
@@ -98,8 +98,8 @@ def _make_calc(tools=None, call_result="42"):
     """Create a ``CalcMCPClient`` with mocked inherited methods."""
     with (
         patch.object(Client, "__init__", return_value=None),
-        patch.object(calc_mcp_client, "is_oauth", return_value=False),
-        patch.object(calc_mcp_client, "get_url", return_value=_URL),
+        patch.object(calc_client, "is_oauth", return_value=False),
+        patch.object(calc_client, "get_url", return_value=_URL),
     ):
         calc = CalcMCPClient()
 
@@ -151,14 +151,14 @@ def test_init_oauth_missing_env_raises(monkeypatch):
     monkeypatch.delenv("OAUTH_STORAGE_ENCRYPTION_KEY", raising=False)
     with (
         patch.object(Client, "__init__", return_value=None),
-        patch.object(calc_mcp_client, "is_oauth", return_value=True),
-        patch.object(calc_mcp_client, "get_url", return_value=_URL),
+        patch.object(calc_client, "is_oauth", return_value=True),
+        patch.object(calc_client, "get_url", return_value=_URL),
         patch.object(
-            calc_mcp_client,
+            calc_client,
             "get_token_dir",
             return_value="/tmp/test-tokens",
         ),
-        patch.object(calc_mcp_client, "get_callback_port", return_value=10000),
+        patch.object(calc_client, "get_callback_port", return_value=10000),
     ):
         with pytest.raises(KeyError):
             CalcMCPClient()

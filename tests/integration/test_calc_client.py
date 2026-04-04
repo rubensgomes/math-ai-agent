@@ -42,14 +42,14 @@ Connects to the remote calculator MCP server, lists available tools,
 and calls each one with sample arguments to verify end-to-end
 connectivity.  Run standalone with::
 
-    poetry run python tests/integration/test_calc_mcp_client.py
+    poetry run python tests/integration/test_calc_client.py
 """
 
 import asyncio
 import json
 import logging
 
-from math_ai_agent.calc_mcp_client import CalcMCPClient
+from math_ai_agent.mcp.calc_client import CalcMCPClient
 
 logger = logging.getLogger(__name__)
 

@@ -36,14 +36,18 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-"""Calculator MCP client.
+"""Calculator MCP client and helper functions.
 
 Provides the ``CalcMCPClient`` class which extends ``fastmcp.Client``
 to connect to a remote calculator MCP server, cache its tool list,
 and expose inherited ``call_tool()`` / ``list_tools()`` methods.
+Also provides the helper functions ``get_mcp_tools()`` to discover
+available tools and ``call_tool()`` to invoke a tool over a new
+connection.
 """
 
 import asyncio
+import json
 import logging
 import os
 
@@ -120,7 +124,7 @@ class CalcMCPClient(Client):
         logger.debug("Closing CalcMCPClient")
         await super().__aexit__(exc_type, exc, tb)
 
-    async def list_tools(self) -> list[mcp.types.Tool]:
+    async def list_tools(self, max_pages: int = 0) -> list[mcp.types.Tool]:
         """Return cached tools, fetching from the server on first call.
 
         Thread-safe via an ``asyncio.Lock``.  Subsequent calls return
@@ -172,3 +176,48 @@ class CalcMCPClient(Client):
             len(openai_tools),
         )
         return openai_tools
+
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+async def get_mcp_tools() -> list[dict[str, object]]:
+    """Discover available tools from the Calculator MCP server.
+
+    Returns:
+        OpenAI-format tool definitions discovered from the
+        MCP server.
+    """
+    logger.debug("Discovering Calculator MCP tools")
+    async with CalcMCPClient() as calcmcp_client:
+        tools = await calcmcp_client.to_openai_tools()
+    logger.debug("Discovered %d MCP tool(s)", len(tools))
+    return tools
+
+
+async def call_tool(tool_name: str, args: dict) -> str:
+    """Call a calculator MCP tool over a new connection.
+
+    Args:
+        tool_name: The name of the MCP tool to invoke.
+        args: The arguments to pass to the tool.
+
+    Returns:
+        The string representation of the tool result.
+
+    Raises:
+        Exception: If the MCP tool call fails.
+    """
+    async with CalcMCPClient() as calcmcp_client:
+        logger.debug(
+            "Calling calculator MCP tool %s with %s",
+            tool_name,
+            args,
+        )
+        result = await calcmcp_client.call_tool(tool_name, args)
+        logger.debug(
+            "Tool %s result:\n%s",
+            tool_name,
+            json.dumps(result.structured_content, indent=2),
+        )
+        return str(result.data)
