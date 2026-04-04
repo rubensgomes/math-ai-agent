@@ -20,22 +20,24 @@ integration.
 ```
 src/math_ai_agent/
   app.py                # FastAPI application (web UI + /prompt endpoint)
-  calc_mcp_client.py    # Calculator MCP client (extends fastmcp.Client)
-  llm.py                # Async OpenAI client wrapper for LLM chat completions
-  models.py             # Pydantic models (Prompt) for request validation
   config.py             # Configuration helpers (loads config.yaml, logging)
   config.yaml           # Server, OAuth, and logging configuration
+  models.py             # Pydantic models (Prompt) for request validation
+  llm/
+    llm.py              # OpenAI client wrapper and agent loop
+  mcp/
+    calc_client.py      # Calculator MCP client and helper functions
   static/
     index.html          # Web UI served at /
 tests/
   integration/
-    test_calc_mcp_client.py  # Integration test for the MCP client
+    test_calc_client.py      # Integration test for the MCP client
     test_openai_client.py    # Integration test for the raw OpenAI SDK
     test_llm.py              # Integration test for the OpenAIClient wrapper
     test_llm_tool.py         # Integration test for LLM with tool calling
     test_app.py              # FastAPI integration test application
     app_text.txt             # Sample text fixture for integration tests
-  test_calc_mcp_client.py    # Unit tests for calc_mcp_client.py
+  test_calc_client.py        # Unit tests for calc_client.py
   test_config.py             # Unit tests for config.py
   test_llm.py                # Unit tests for llm.py
   test_app.py                # Unit tests for app.py
@@ -75,7 +77,7 @@ poetry run uvicorn math_ai_agent.app:app --reload
 # Change to the project root folder
 cd $(git rev-parse --show-toplevel) || exit
 # Run the MCP integration test client
-poetry run python tests/integration/test_calc_mcp_client.py
+poetry run python tests/integration/test_calc_client.py
 # Run the FastAPI web server test
 poetry run uvicorn tests.integration.test_app:app --reload
 ```

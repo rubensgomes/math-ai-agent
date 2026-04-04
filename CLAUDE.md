@@ -15,7 +15,7 @@ poetry install
 poetry run uvicorn math_ai_agent.app:app --reload
 
 # Run the MCP integration test client
-poetry run python tests/integration/test_calc_mcp_client.py
+poetry run python tests/integration/test_calc_client.py
 ```
 
 ## Code Quality

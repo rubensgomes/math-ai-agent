@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.15] - 2026-04-04
+
+### Changed
+
+- Fixed stale integration test command in `CLAUDE.md` (`test_calc_mcp_client.py`
+  → `test_calc_client.py`)
+- Updated project structure in `README.md` to show `llm/` and `mcp/`
+  sub-packages and renamed test files
+- Updated architecture description and project structure in `llms.txt` to
+  reflect four-component design with `llm/` and `mcp/` sub-packages
+- Updated `TODO.md` to reference `llm/llm.py` instead of `app.py`, removed
+  completed modularization item
+- Added documentation review step to `.claude/commands/release-plan.md`
+
 ## [0.0.14] - 2026-04-04
 
 ### Added

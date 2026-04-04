@@ -22,9 +22,7 @@ client = OpenAI(
 )
 
 
-## src/math_ai_agent/app.py
-- break the app.py code into modular areas, and delegate calls to modules.  
-  Need to see patterns used in OpenAI codebase
+## src/math_ai_agent/llm/llm.py
 - check if the tool requested by the LLM is supported or registered
 - add number of tokens consumed in error log when LLM reaches limit
 - create a debug log message that displays several details in the LMM 
