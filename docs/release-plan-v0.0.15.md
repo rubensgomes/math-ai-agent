@@ -30,4 +30,4 @@ moved modules into `llm/` and `mcp/` sub-packages, and renamed test files.
 - [x] Verify `CHANGELOG.md` exists
 - [x] Update `CHANGELOG.md` with v0.0.15 changes
 - [x] Bump version to 0.0.15 in `pyproject.toml`
-- [ ] Commit all changes, tag, push, and create GitHub release
+- [x] Commit all changes, tag, push, and create GitHub release
