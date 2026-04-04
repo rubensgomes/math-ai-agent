@@ -14,4 +14,4 @@ functions to their new locations, and rename files for consistency.
 - [x] Run `export SOURCE_DATE_EPOCH=$(date +%s); poetry build -v` and fix any issues
 - [x] Update `CHANGELOG.md` with v0.0.14 changes
 - [x] Bump version in `pyproject.toml` to 0.0.14
-- [ ] Commit all changes to main, create tag, push, and create GitHub release
+- [x] Commit all changes to main, create tag, push, and create GitHub release
